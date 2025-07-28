@@ -20,6 +20,8 @@ import {
 import { OrderSummaryByMerchant } from "@/components/OrderSummaryByMerchant";
 import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/Footer";
+import { useSupabaseSession } from "@/hooks/useSupabaseSession";
+import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
 
 interface MenuItem {
   id: string;
@@ -48,48 +50,29 @@ const OrderOverview = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const [merchantName, setMerchantName] = useState("Warteg Bahari");
-  const [merchants, setMerchants] = useState<Merchant[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [sessionCreated, setSessionCreated] = useState<string>("");
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const [merchantDeliveryFees, setMerchantDeliveryFees] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
-  // Load session data and orders
-  useEffect(() => {
-    if (sessionId) {
-      // Load session info
-      const sessionData = localStorage.getItem(`session_${sessionId}`);
-      if (sessionData) {
-        const parsed = JSON.parse(sessionData);
-        const sessionMerchants = parsed.merchants || [];
-        setMerchants(sessionMerchants);
-        
-        if (sessionMerchants.length === 1) {
-          setMerchantName(sessionMerchants[0].name);
-        } else if (sessionMerchants.length > 1) {
-          setMerchantName(`Grup Order - ${sessionMerchants.length} Merchant`);
-        }
-        
-        setSessionCreated(parsed.createdAt);
-      } else {
-        // Mock merchants for development
-        const mockMerchants = [
-          { id: 'merchant_1', name: 'Warung Gudeg Bu Sari', link: 'https://gofood.co.id/warung-gudeg' },
-          { id: 'merchant_2', name: 'Ayam Geprek Bensu', link: 'https://gofood.co.id/ayam-geprek' },
-          { id: 'merchant_3', name: 'Bakso Solo Samrat', link: 'https://gofood.co.id/bakso-solo' }
-        ];
-        setMerchants(mockMerchants);
-        setMerchantName(`Grup Order - ${mockMerchants.length} Merchant`);
-      }
+  // Use Supabase hooks to load data
+  const { sessionData, loading: sessionLoading } = useSupabaseSession(sessionId);
+  const { orders, loading: ordersLoading } = useSupabaseOrders(sessionId);
 
-      // Load orders for this session
-      const ordersData = localStorage.getItem(`orders_${sessionId}`);
-      if (ordersData) {
-        setOrders(JSON.parse(ordersData));
+  const merchants = sessionData?.merchants || [];
+  const sessionCreated = sessionData ? new Date().toISOString() : "";
+
+  // Update merchant name when session data loads
+  useEffect(() => {
+    if (sessionData) {
+      if (merchants.length === 1) {
+        setMerchantName(merchants[0].name);
+      } else if (merchants.length > 1) {
+        setMerchantName(`Grup Order - ${merchants.length} Merchant`);
+      } else {
+        setMerchantName(sessionData.sessionName);
       }
     }
-  }, [sessionId]);
+  }, [sessionData, merchants]);
 
   // Calculate summary statistics
   const totalOrders = orders.length;
