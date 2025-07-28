@@ -297,7 +297,7 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-success">
-                Rp {totalAmount.toLocaleString('id-ID')}
+                Rp {(totalAmount + totalDeliveryFees).toLocaleString('id-ID')}
               </div>
               <p className="text-xs text-muted-foreground">
                 total pembayaran
