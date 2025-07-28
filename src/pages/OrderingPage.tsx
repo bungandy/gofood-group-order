@@ -487,7 +487,7 @@ const OrderingPage = () => {
                                  ))}
                                </div>
                                <div className="flex justify-between text-sm font-medium text-primary mt-2 pt-2 border-t border-primary/20">
-                                 <span>Subtotal {merchant?.name}:</span>
+                                 <span>Subtotal:</span>
                                  <span>Rp {merchantTotal.toLocaleString('id-ID')}</span>
                                </div>
                              </div>
