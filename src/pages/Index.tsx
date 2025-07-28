@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Users, Share2, ShoppingBag, Utensils, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/Footer";
+import { useSupabaseSession } from "@/hooks/useSupabaseSession";
 
 const Index = () => {
   const [merchants, setMerchants] = useState([{ name: "", link: "" }]);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { createSession, loading } = useSupabaseSession();
 
   const addMerchant = () => {
     setMerchants([...merchants, { name: "", link: "" }]);
@@ -30,7 +32,7 @@ const Index = () => {
     setMerchants(updated);
   };
 
-  const handleCreateSession = () => {
+  const handleCreateSession = async () => {
     // Validate that at least one merchant has both name and link
     const validMerchants = merchants.filter(m => m.name.trim() && m.link.trim());
     
@@ -43,26 +45,18 @@ const Index = () => {
       return;
     }
     
-    // Generate session ID and redirect to ordering page
-    const sessionId = Math.random().toString(36).substring(2, 15);
-    
-    // Store session data in localStorage for demo purposes
-    // In real app, this would be stored in backend/database
-    localStorage.setItem(`session_${sessionId}`, JSON.stringify({
-      merchants: validMerchants,
-      sessionName: validMerchants.length === 1 ? validMerchants[0].name : `${validMerchants.length} Merchant`,
-      createdAt: new Date().toISOString()
-    }));
-    
-    toast({
-      title: "Sesi pemesanan dibuat!",
-      description: "Anda akan diarahkan ke halaman pemesanan",
-    });
-    
-    // Navigate to ordering page
-    setTimeout(() => {
-      navigate(`/order/${sessionId}`);
-    }, 1000);
+    try {
+      const sessionName = validMerchants.length === 1 ? validMerchants[0].name : `${validMerchants.length} Merchant`;
+      const sessionId = await createSession(sessionName, validMerchants);
+      
+      // Navigate to ordering page
+      setTimeout(() => {
+        navigate(`/order/${sessionId}`);
+      }, 1000);
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Failed to create session:', error);
+    }
   };
 
   return (
@@ -221,6 +215,7 @@ const Index = () => {
               
               <Button 
                 onClick={handleCreateSession}
+                disabled={loading}
                 className="w-full bg-gradient-to-r from-primary to-primary-hover hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
                 size="lg"
               >

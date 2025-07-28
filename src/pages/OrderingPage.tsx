@@ -11,6 +11,8 @@ import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3,
 import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/Footer";
 import { OrderSummaryByMerchant } from "@/components/OrderSummaryByMerchant";
+import { useSupabaseSession } from "@/hooks/useSupabaseSession";
+import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
 // import { GroupChat } from "@/components/GroupChat"; // Temporarily disabled for next phase
 
 interface MenuItem {
@@ -38,22 +40,23 @@ interface Order {
   timestamp: string;
 }
 const OrderingPage = () => {
-  const {
-    sessionId
-  } = useParams();
+  const { sessionId } = useParams();
   const navigate = useNavigate();
-  const [merchantName, setMerchantName] = useState("Grup Order Session");
-  const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [cart, setCart] = useState<{
     menuItem: MenuItem;
     quantity: number;
   }[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [expandedMerchants, setExpandedMerchants] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
+  
+  // Supabase hooks
+  const { sessionData, loading: sessionLoading } = useSupabaseSession(sessionId);
+  const { orders, createOrder, updateOrder, deleteOrder, loading: ordersLoading } = useSupabaseOrders(sessionId);
+  
   const toggleMerchantExpansion = (merchantId: string) => {
     setExpandedMerchants(prev => {
       const newSet = new Set(prev);
@@ -65,63 +68,10 @@ const OrderingPage = () => {
       return newSet;
     });
   };
-  const {
-    toast
-  } = useToast();
 
-  // Load session data and existing orders on component mount
-  useEffect(() => {
-    if (sessionId) {
-      // Load session data
-      const sessionData = localStorage.getItem(`session_${sessionId}`);
-      console.log('Session data:', sessionData);
-      if (sessionData) {
-        const parsed = JSON.parse(sessionData);
-        console.log('Parsed session data:', parsed);
-        const sessionMerchants = parsed.merchants || [];
-        console.log('Session merchants before ID assignment:', sessionMerchants);
-
-        // Add IDs to merchants if they don't have them
-        const merchantsWithIds = sessionMerchants.map((merchant: any, index: number) => ({
-          ...merchant,
-          id: merchant.id || `merchant_${index + 1}`
-        }));
-        console.log('Session merchants after ID assignment:', merchantsWithIds);
-        setMerchants(merchantsWithIds);
-
-        // Set merchant name based on number of merchants
-        if (merchantsWithIds.length === 1) {
-          setMerchantName(merchantsWithIds[0].name);
-        } else if (merchantsWithIds.length > 1) {
-          setMerchantName(`Grup Order - ${merchantsWithIds.length} Merchant`);
-        }
-      } else {
-        // If no session data, create mock merchants for development
-        const mockMerchants = [{
-          id: 'merchant_1',
-          name: 'Warung Gudeg Bu Sari',
-          link: 'https://gofood.co.id/warung-gudeg'
-        }, {
-          id: 'merchant_2',
-          name: 'Ayam Geprek Bensu',
-          link: 'https://gofood.co.id/ayam-geprek'
-        }, {
-          id: 'merchant_3',
-          name: 'Bakso Solo Samrat',
-          link: 'https://gofood.co.id/bakso-solo'
-        }];
-        setMerchants(mockMerchants);
-        setMerchantName(`Grup Order - ${mockMerchants.length} Merchant`);
-        console.log('Using mock merchants:', mockMerchants);
-      }
-
-      // Load existing orders for this session
-      const ordersData = localStorage.getItem(`orders_${sessionId}`);
-      if (ordersData) {
-        setOrders(JSON.parse(ordersData));
-      }
-    }
-  }, [sessionId]);
+  // Get merchants and session name from Supabase data
+  const merchants = sessionData?.merchants || [];
+  const merchantName = sessionData?.sessionName || "Grup Order Session";
 
   // Generate menu items based on merchants - in real app, this would come from API
   const getAllMenuItems = (): MenuItem[] => {
@@ -276,7 +226,7 @@ const OrderingPage = () => {
     });
   };
   const cartTotal = cart.reduce((total, item) => total + item.menuItem.price * item.quantity, 0);
-  const submitOrder = () => {
+  const submitOrder = async () => {
     if (!customerName || cart.length === 0) {
       toast({
         title: "Pesanan tidak lengkap",
@@ -285,29 +235,30 @@ const OrderingPage = () => {
       });
       return;
     }
-    const newOrder: Order = {
-      id: Math.random().toString(36).substring(2, 15),
-      customerName,
-      items: [...cart],
-      notes,
-      total: cartTotal,
-      timestamp: new Date().toISOString()
-    };
-    const updatedOrders = [...orders, newOrder];
-    setOrders(updatedOrders);
 
-    // Save orders to localStorage
-    if (sessionId) {
-      localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
+    try {
+      const orderData = {
+        customerName,
+        items: [...cart],
+        notes,
+        total: cartTotal
+      };
+
+      if (editingOrder) {
+        await updateOrder(editingOrder.id, orderData);
+      } else {
+        await createOrder(orderData);
+      }
+
+      // Reset form
+      setCart([]);
+      setCustomerName("");
+      setNotes("");
+      setEditingOrder(null);
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Failed to submit order:', error);
     }
-    setCart([]);
-    setCustomerName("");
-    setNotes("");
-    setEditingOrder(null);
-    toast({
-      title: editingOrder ? "Pesanan berhasil diperbarui!" : "Pesanan berhasil ditambahkan!",
-      description: `Pesanan atas nama ${customerName} telah ${editingOrder ? "diperbarui" : "disimpan"}`
-    });
   };
   const shareLink = () => {
     const currentUrl = window.location.href;
@@ -329,28 +280,19 @@ const OrderingPage = () => {
     setCart(order.items);
     setNotes(order.notes || "");
 
-    // Remove the order being edited from the list
-    const updatedOrders = orders.filter(o => o.id !== order.id);
-    setOrders(updatedOrders);
-    if (sessionId) {
-      localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
-    }
     toast({
       title: "Pesanan dimuat untuk diedit",
       description: `Pesanan ${order.customerName} telah dimuat ke form`
     });
   };
-  const deleteOrder = (orderId: string) => {
-    const orderToDelete = orders.find(o => o.id === orderId);
-    const updatedOrders = orders.filter(o => o.id !== orderId);
-    setOrders(updatedOrders);
-    if (sessionId) {
-      localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      await deleteOrder(orderId);
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Failed to delete order:', error);
     }
-    toast({
-      title: "Pesanan dihapus",
-      description: `Pesanan ${orderToDelete?.customerName} telah dihapus`
-    });
   };
   const grandTotal = orders.reduce((total, order) => total + order.total, 0);
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -546,14 +488,14 @@ const OrderingPage = () => {
                   <Input id="notes" placeholder="Contoh: level pedas, tanpa bawang, dll" value={notes} onChange={e => setNotes(e.target.value)} />
                 </div>
 
-                <Button onClick={submitOrder} className="w-full" disabled={!customerName || cart.length === 0}>
+                <Button onClick={submitOrder} className="w-full" disabled={!customerName || cart.length === 0 || ordersLoading}>
                   {editingOrder ? "Perbarui Pesanan" : "Tambah ke Pesanan Grup"}
                 </Button>
               </CardContent>
             </Card>
 
             {/* Orders Summary */}
-            <OrderSummaryByMerchant orders={orders} merchants={merchants} onEditOrder={editOrder} onDeleteOrder={deleteOrder} compact={true} />
+            <OrderSummaryByMerchant orders={orders} merchants={merchants} onEditOrder={editOrder} onDeleteOrder={handleDeleteOrder} compact={true} />
             
             {/* Overview Button */}
             {orders.length > 0 && <Card className="bg-white/80 backdrop-blur-sm">

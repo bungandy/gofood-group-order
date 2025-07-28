@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Send, MessageCircle, AtSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseChat } from "@/hooks/useSupabaseChat";
 
 interface ChatMessage {
   id: string;
@@ -31,24 +32,17 @@ interface GroupChatProps {
 }
 
 export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // Supabase hook for chat functionality
+  const { messages, sendMessage, loading } = useSupabaseChat(sessionId);
+
   // Get all unique customer names for mentions
   const availableUsers = Array.from(new Set(orders.map(order => order.customerName)));
-
-  useEffect(() => {
-    if (sessionId) {
-      const chatData = localStorage.getItem(`chat_${sessionId}`);
-      if (chatData) {
-        setMessages(JSON.parse(chatData));
-      }
-    }
-  }, [sessionId]);
 
   useEffect(() => {
     // Auto scroll to bottom when new messages arrive
@@ -57,7 +51,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     }
   }, [messages]);
 
-  const sendMessage = () => {
+  const sendChatMessage = async () => {
     if (!newMessage.trim() || !currentUserName) {
       if (!currentUserName) {
         toast({
@@ -77,36 +71,24 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
       mentions.push(match[1]);
     }
 
-    const chatMessage: ChatMessage = {
-      id: Math.random().toString(36).substring(2, 15),
-      senderName: currentUserName,
-      message: newMessage,
-      timestamp: new Date().toISOString(),
-      mentions: mentions.length > 0 ? mentions : undefined,
-    };
-
-    const updatedMessages = [...messages, chatMessage];
-    setMessages(updatedMessages);
-    
-    // Save to localStorage
-    if (sessionId) {
-      localStorage.setItem(`chat_${sessionId}`, JSON.stringify(updatedMessages));
-    }
-    
-    setNewMessage("");
-    setShowMentions(false);
-
-    if (mentions.length > 0) {
-      toast({
-        title: "Pesan terkirim",
-        description: `Anda mention ${mentions.join(", ")}`,
-      });
+    try {
+      await sendMessage(
+        currentUserName, 
+        newMessage, 
+        mentions.length > 0 ? mentions : undefined
+      );
+      
+      setNewMessage("");
+      setShowMentions(false);
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Failed to send message:', error);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      sendMessage();
+      sendChatMessage();
     }
   };
 
@@ -255,8 +237,8 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
             className="flex-1"
           />
           <Button
-            onClick={sendMessage}
-            disabled={!newMessage.trim() || !currentUserName}
+            onClick={sendChatMessage}
+            disabled={!newMessage.trim() || !currentUserName || loading}
             size="sm"
           >
             <Send className="w-4 h-4" />
