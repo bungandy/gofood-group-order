@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3 } from "lucide-react";
+import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3, Edit2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { GroupChat } from "@/components/GroupChat";
 
@@ -36,6 +36,7 @@ const OrderingPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const { toast } = useToast();
 
   // Load session data and existing orders on component mount
@@ -122,10 +123,11 @@ const OrderingPage = () => {
     setCart([]);
     setCustomerName("");
     setNotes("");
+    setEditingOrder(null);
 
     toast({
-      title: "Pesanan berhasil ditambahkan!",
-      description: `Pesanan atas nama ${customerName} telah disimpan`,
+      title: editingOrder ? "Pesanan berhasil diperbarui!" : "Pesanan berhasil ditambahkan!",
+      description: `Pesanan atas nama ${customerName} telah ${editingOrder ? "diperbarui" : "disimpan"}`,
     });
   };
 
@@ -143,6 +145,41 @@ const OrderingPage = () => {
 
   const goToOverview = () => {
     navigate(`/order/${sessionId}/overview`);
+  };
+
+  const editOrder = (order: Order) => {
+    setEditingOrder(order);
+    setCustomerName(order.customerName);
+    setCart(order.items);
+    setNotes(order.notes || "");
+    
+    // Remove the order being edited from the list
+    const updatedOrders = orders.filter(o => o.id !== order.id);
+    setOrders(updatedOrders);
+    
+    if (sessionId) {
+      localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
+    }
+
+    toast({
+      title: "Pesanan dimuat untuk diedit",
+      description: `Pesanan ${order.customerName} telah dimuat ke form`,
+    });
+  };
+
+  const deleteOrder = (orderId: string) => {
+    const orderToDelete = orders.find(o => o.id === orderId);
+    const updatedOrders = orders.filter(o => o.id !== orderId);
+    setOrders(updatedOrders);
+    
+    if (sessionId) {
+      localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
+    }
+
+    toast({
+      title: "Pesanan dihapus",
+      description: `Pesanan ${orderToDelete?.customerName} telah dihapus`,
+    });
   };
 
   const grandTotal = orders.reduce((total, order) => total + order.total, 0);
@@ -303,7 +340,7 @@ const OrderingPage = () => {
                   className="w-full"
                   disabled={!customerName || cart.length === 0}
                 >
-                  Tambah ke Pesanan Grup
+                  {editingOrder ? "Perbarui Pesanan" : "Tambah ke Pesanan Grup"}
                 </Button>
               </CardContent>
             </Card>
@@ -318,7 +355,27 @@ const OrderingPage = () => {
                 <CardContent className="space-y-4">
                   {orders.map((order) => (
                     <div key={order.id} className="p-3 border rounded-lg bg-muted/30">
-                      <div className="font-semibold">{order.customerName}</div>
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-semibold">{order.customerName}</div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editOrder(order)}
+                            className="h-8 w-8 p-0 hover:bg-primary/10"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteOrder(order.id)}
+                            className="h-8 w-8 p-0 hover:bg-destructive/10 text-destructive"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
                       <div className="text-xs text-muted-foreground mb-1">
                         {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID', {
                           hour: '2-digit',
