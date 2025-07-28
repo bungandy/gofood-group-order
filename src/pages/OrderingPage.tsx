@@ -270,74 +270,74 @@ const OrderingPage = () => {
             />
             */}
             {/* Menu Section */}
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>Menu Tersedia</CardTitle>
-                <CardDescription>Pilih menu yang ingin dipesan dari merchant yang tersedia</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {merchants.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
+            {merchants.length === 0 ? (
+              <Card className="bg-white/80 backdrop-blur-sm">
+                <CardContent className="py-8">
+                  <div className="text-center text-muted-foreground">
                     <p>Tidak ada merchant tersedia</p>
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {merchants.map((merchant) => {
-                      const merchantMenus = menuItems.filter(item => item.merchantId === merchant.id);
-                      
-                      return (
-                        <div key={merchant.id} className="space-y-4">
-                          {/* Merchant Header */}
-                          <div className="border-b pb-2">
-                            <h3 className="text-lg font-semibold text-primary">{merchant.name}</h3>
-                            <p className="text-sm text-muted-foreground">{merchantMenus.length} menu tersedia</p>
-                          </div>
-                          
-                          {/* Merchant Menu Items */}
-                          <div className="grid gap-3 pl-2">
-                            {merchantMenus.map((item) => {
-                              const cartItem = cart.find(c => c.menuItem.id === item.id);
-                              const quantity = cartItem?.quantity || 0;
-                              
-                              return (
-                                <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors bg-background/50">
-                                  <div className="flex-1">
-                                    <h4 className="font-medium">{item.name}</h4>
-                                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                                    <p className="font-medium text-primary mt-1">
-                                      Rp {item.price.toLocaleString('id-ID')}
-                                    </p>
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => removeFromCart(item.id)}
-                                      disabled={quantity === 0}
-                                    >
-                                      <Minus className="w-4 h-4" />
-                                    </Button>
-                                    <span className="w-8 text-center font-medium">{quantity}</span>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => addToCart(item)}
-                                    >
-                                      <Plus className="w-4 h-4" />
-                                    </Button>
-                                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {merchants.map((merchant) => {
+                  const merchantMenus = menuItems.filter(item => item.merchantId === merchant.id);
+                  
+                  return (
+                    <Card key={merchant.id} className="bg-white/80 backdrop-blur-sm animate-fade-in">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-primary flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          {merchant.name}
+                        </CardTitle>
+                        <CardDescription>{merchantMenus.length} menu tersedia</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid gap-3">
+                          {merchantMenus.map((item) => {
+                            const cartItem = cart.find(c => c.menuItem.id === item.id);
+                            const quantity = cartItem?.quantity || 0;
+                            
+                            return (
+                              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover:shadow-sm">
+                                <div className="flex-1">
+                                  <h4 className="font-medium">{item.name}</h4>
+                                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                                  <p className="font-medium text-primary mt-1">
+                                    Rp {item.price.toLocaleString('id-ID')}
+                                  </p>
                                 </div>
-                              );
-                            })}
-                          </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => removeFromCart(item.id)}
+                                    disabled={quantity === 0}
+                                    className="hover-scale"
+                                  >
+                                    <Minus className="w-4 h-4" />
+                                  </Button>
+                                  <span className="w-8 text-center font-medium">{quantity}</span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => addToCart(item)}
+                                    className="hover-scale"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Order Form & Summary */}
