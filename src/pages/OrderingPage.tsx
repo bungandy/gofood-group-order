@@ -17,6 +17,13 @@ interface MenuItem {
   price: number;
   description?: string;
   image?: string;
+  merchantId: string;
+}
+
+interface Merchant {
+  id: string;
+  name: string;
+  link: string;
 }
 
 interface Order {
@@ -31,7 +38,8 @@ interface Order {
 const OrderingPage = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  const [merchantName, setMerchantName] = useState("Warteg Bahari");
+  const [merchantName, setMerchantName] = useState("Grup Order Session");
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [cart, setCart] = useState<{ menuItem: MenuItem; quantity: number }[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -46,8 +54,16 @@ const OrderingPage = () => {
       // Load session data
       const sessionData = localStorage.getItem(`session_${sessionId}`);
       if (sessionData) {
-        const { merchantName: name } = JSON.parse(sessionData);
-        setMerchantName(name);
+        const parsed = JSON.parse(sessionData);
+        const sessionMerchants = parsed.merchants || [];
+        setMerchants(sessionMerchants);
+        
+        // Set merchant name based on number of merchants
+        if (sessionMerchants.length === 1) {
+          setMerchantName(sessionMerchants[0].name);
+        } else if (sessionMerchants.length > 1) {
+          setMerchantName(`Grup Order - ${sessionMerchants.length} Merchant`);
+        }
       }
       
       // Load existing orders for this session
@@ -58,15 +74,27 @@ const OrderingPage = () => {
     }
   }, [sessionId]);
 
-  // Mock menu items - in real app, this would come from props or API
-  const menuItems: MenuItem[] = [
-    { id: "1", name: "Nasi Gudeg Komplit", price: 25000, description: "Nasi putih, gudeg, ayam, telur, tahu, tempe" },
-    { id: "2", name: "Nasi Pecel", price: 15000, description: "Nasi putih dengan sayuran dan bumbu pecel" },
-    { id: "3", name: "Soto Ayam", price: 20000, description: "Soto ayam dengan nasi putih" },
-    { id: "4", name: "Gado-gado", price: 18000, description: "Sayuran segar dengan bumbu kacang" },
-    { id: "5", name: "Es Teh Manis", price: 5000, description: "Minuman segar es teh manis" },
-    { id: "6", name: "Es Jeruk", price: 8000, description: "Minuman segar es jeruk peras" },
-  ];
+  // Generate menu items based on merchants - in real app, this would come from API
+  const getAllMenuItems = (): MenuItem[] => {
+    const allItems: MenuItem[] = [];
+    
+    merchants.forEach((merchant, index) => {
+      // Mock menu items for each merchant
+      const merchantMenus = [
+        { id: `${merchant.id}_1`, name: "Nasi Gudeg Komplit", price: 25000, description: "Nasi putih, gudeg, ayam, telur, tahu, tempe", merchantId: merchant.id },
+        { id: `${merchant.id}_2`, name: "Nasi Pecel", price: 15000, description: "Nasi putih dengan sayuran dan bumbu pecel", merchantId: merchant.id },
+        { id: `${merchant.id}_3`, name: "Soto Ayam", price: 20000, description: "Soto ayam dengan nasi putih", merchantId: merchant.id },
+        { id: `${merchant.id}_4`, name: "Gado-gado", price: 18000, description: "Sayuran segar dengan bumbu kacang", merchantId: merchant.id },
+        { id: `${merchant.id}_5`, name: "Es Teh Manis", price: 5000, description: "Minuman segar es teh manis", merchantId: merchant.id },
+        { id: `${merchant.id}_6`, name: "Es Jeruk", price: 8000, description: "Minuman segar es jeruk peras", merchantId: merchant.id },
+      ];
+      allItems.push(...merchantMenus);
+    });
+    
+    return allItems;
+  };
+
+  const menuItems = getAllMenuItems();
 
   const addToCart = (menuItem: MenuItem) => {
     setCart(prev => {
@@ -245,46 +273,69 @@ const OrderingPage = () => {
             <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Menu Tersedia</CardTitle>
-                <CardDescription>Pilih menu yang ingin dipesan</CardDescription>
+                <CardDescription>Pilih menu yang ingin dipesan dari merchant yang tersedia</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4">
-                  {menuItems.map((item) => {
-                    const cartItem = cart.find(c => c.menuItem.id === item.id);
-                    const quantity = cartItem?.quantity || 0;
-                    
-                    return (
-                      <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{item.name}</h3>
-                          <p className="text-sm text-muted-foreground">{item.description}</p>
-                          <p className="font-medium text-primary mt-1">
-                            Rp {item.price.toLocaleString('id-ID')}
-                          </p>
+                {merchants.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada merchant tersedia</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {merchants.map((merchant) => {
+                      const merchantMenus = menuItems.filter(item => item.merchantId === merchant.id);
+                      
+                      return (
+                        <div key={merchant.id} className="space-y-4">
+                          {/* Merchant Header */}
+                          <div className="border-b pb-2">
+                            <h3 className="text-lg font-semibold text-primary">{merchant.name}</h3>
+                            <p className="text-sm text-muted-foreground">{merchantMenus.length} menu tersedia</p>
+                          </div>
+                          
+                          {/* Merchant Menu Items */}
+                          <div className="grid gap-3 pl-2">
+                            {merchantMenus.map((item) => {
+                              const cartItem = cart.find(c => c.menuItem.id === item.id);
+                              const quantity = cartItem?.quantity || 0;
+                              
+                              return (
+                                <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors bg-background/50">
+                                  <div className="flex-1">
+                                    <h4 className="font-medium">{item.name}</h4>
+                                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                                    <p className="font-medium text-primary mt-1">
+                                      Rp {item.price.toLocaleString('id-ID')}
+                                    </p>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => removeFromCart(item.id)}
+                                      disabled={quantity === 0}
+                                    >
+                                      <Minus className="w-4 h-4" />
+                                    </Button>
+                                    <span className="w-8 text-center font-medium">{quantity}</span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => addToCart(item)}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeFromCart(item.id)}
-                            disabled={quantity === 0}
-                          >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <span className="w-8 text-center font-medium">{quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addToCart(item)}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
