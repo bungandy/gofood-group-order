@@ -12,7 +12,8 @@ import {
   Download, 
   MessageSquare,
   Clock,
-  CheckCircle
+  CheckCircle,
+  User
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -283,7 +284,10 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
                         <div className="mt-1 space-y-1">
                           {customers.map((customer, idx) => (
                             <div key={idx} className="flex justify-between">
-                              <span>{customer.name} ({customer.quantity}x)</span>
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {customer.name} ({customer.quantity}x)
+                              </span>
                               {customer.notes && (
                                 <span className="italic">"{customer.notes}"</span>
                               )}
