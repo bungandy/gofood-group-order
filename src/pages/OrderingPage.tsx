@@ -73,14 +73,22 @@ const OrderingPage = () => {
         const parsed = JSON.parse(sessionData);
         console.log('Parsed session data:', parsed);
         const sessionMerchants = parsed.merchants || [];
-        console.log('Session merchants:', sessionMerchants);
-        setMerchants(sessionMerchants);
+        console.log('Session merchants before ID assignment:', sessionMerchants);
+        
+        // Add IDs to merchants if they don't have them
+        const merchantsWithIds = sessionMerchants.map((merchant: any, index: number) => ({
+          ...merchant,
+          id: merchant.id || `merchant_${index + 1}`
+        }));
+        
+        console.log('Session merchants after ID assignment:', merchantsWithIds);
+        setMerchants(merchantsWithIds);
         
         // Set merchant name based on number of merchants
-        if (sessionMerchants.length === 1) {
-          setMerchantName(sessionMerchants[0].name);
-        } else if (sessionMerchants.length > 1) {
-          setMerchantName(`Grup Order - ${sessionMerchants.length} Merchant`);
+        if (merchantsWithIds.length === 1) {
+          setMerchantName(merchantsWithIds[0].name);
+        } else if (merchantsWithIds.length > 1) {
+          setMerchantName(`Grup Order - ${merchantsWithIds.length} Merchant`);
         }
       } else {
         // If no session data, create mock merchants for development
