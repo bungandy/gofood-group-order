@@ -66,9 +66,12 @@ const OrderingPage = () => {
     if (sessionId) {
       // Load session data
       const sessionData = localStorage.getItem(`session_${sessionId}`);
+      console.log('Session data:', sessionData);
       if (sessionData) {
         const parsed = JSON.parse(sessionData);
+        console.log('Parsed session data:', parsed);
         const sessionMerchants = parsed.merchants || [];
+        console.log('Session merchants:', sessionMerchants);
         setMerchants(sessionMerchants);
         
         // Set merchant name based on number of merchants
@@ -77,6 +80,16 @@ const OrderingPage = () => {
         } else if (sessionMerchants.length > 1) {
           setMerchantName(`Grup Order - ${sessionMerchants.length} Merchant`);
         }
+      } else {
+        // If no session data, create mock merchants for development
+        const mockMerchants = [
+          { id: 'merchant_1', name: 'Warung Gudeg Bu Sari', link: 'https://gofood.co.id/warung-gudeg' },
+          { id: 'merchant_2', name: 'Ayam Geprek Bensu', link: 'https://gofood.co.id/ayam-geprek' },
+          { id: 'merchant_3', name: 'Bakso Solo Samrat', link: 'https://gofood.co.id/bakso-solo' }
+        ];
+        setMerchants(mockMerchants);
+        setMerchantName(`Grup Order - ${mockMerchants.length} Merchant`);
+        console.log('Using mock merchants:', mockMerchants);
       }
       
       // Load existing orders for this session
