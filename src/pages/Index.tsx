@@ -57,13 +57,13 @@ const Index = () => {
 
       toast({
         title: "Sesi berhasil dibuat!",
-        description: `Session ID: ${sessionId}. Redirect dinonaktifkan untuk debugging.`,
+        description: `Session ID: ${sessionId}`,
       });
 
       // Navigate to ordering page - disabled for debugging
-      // setTimeout(() => {
-      //   navigate(`/order/${sessionId}`);
-      // }, 1000);
+      setTimeout(() => {
+        navigate(`/order/${sessionId}`);
+      }, 1000);
     } catch (error) {
       // Error handling is done in the hook
       console.error('Failed to create session:', error);
