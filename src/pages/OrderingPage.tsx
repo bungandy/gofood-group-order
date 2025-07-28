@@ -537,66 +537,99 @@ const OrderingPage = () => {
                   <CardTitle>Ringkasan Pesanan Grup</CardTitle>
                   <CardDescription>{orders.length} pesanan terkumpul</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {orders.map((order) => (
-                    <div key={order.id} className="p-3 border rounded-lg bg-muted/30">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="font-semibold">{order.customerName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }) : 'Just now'}
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => editOrder(order)}
-                            className="h-8 w-8 p-0 hover:bg-primary/10"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteOrder(order.id)}
-                            className="h-8 w-8 p-0 hover:bg-destructive/10 text-destructive"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                       <div className="text-sm text-muted-foreground space-y-1">
-                         {order.items.map((item, idx) => {
-                           const merchant = merchants.find(m => m.id === item.menuItem.merchantId);
-                           return (
-                             <div key={idx} className="flex justify-between items-center">
-                               <div>
-                                 <span>{item.menuItem.name} ({item.quantity}x)</span>
-                                 {merchant && (
-                                   <span className="text-xs ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                                     {merchant.name}
-                                   </span>
-                                 )}
+                 <CardContent className="space-y-4">
+                   {(() => {
+                     // Group orders by merchant
+                     const groupedOrders = orders.reduce((acc, order) => {
+                       order.items.forEach(item => {
+                         const merchantId = item.menuItem.merchantId;
+                         const merchant = merchants.find(m => m.id === merchantId);
+                         const merchantName = merchant?.name || 'Unknown Merchant';
+                         
+                         if (!acc[merchantName]) {
+                           acc[merchantName] = [];
+                         }
+                         
+                         // Check if order already exists for this merchant
+                         let existingOrder = acc[merchantName].find(o => o.id === order.id);
+                         if (!existingOrder) {
+                           existingOrder = {
+                             ...order,
+                             items: []
+                           };
+                           acc[merchantName].push(existingOrder);
+                         }
+                         
+                         // Add item to the order
+                         existingOrder.items.push(item);
+                       });
+                       return acc;
+                     }, {} as Record<string, Order[]>);
+
+                     return Object.entries(groupedOrders).map(([merchantName, merchantOrders]) => (
+                       <div key={merchantName} className="space-y-3">
+                         <div className="font-semibold text-primary flex items-center gap-2 border-b pb-2">
+                           <div className="w-2 h-2 bg-primary rounded-full"></div>
+                           {merchantName}
+                         </div>
+                         
+                         {merchantOrders.map((order) => (
+                           <div key={`${merchantName}_${order.id}`} className="p-3 border rounded-lg bg-muted/30 ml-4">
+                             <div className="flex justify-between items-start mb-2">
+                               <div className="flex items-center gap-2">
+                                 <div className="font-semibold">{order.customerName}</div>
+                                 <div className="text-xs text-muted-foreground">
+                                   {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID', {
+                                     hour: '2-digit',
+                                     minute: '2-digit'
+                                   }) : 'Just now'}
+                                 </div>
+                               </div>
+                               <div className="flex gap-1">
+                                 <Button
+                                   variant="ghost"
+                                   size="sm"
+                                   onClick={() => {
+                                     // Find the original order to edit
+                                     const originalOrder = orders.find(o => o.id === order.id);
+                                     if (originalOrder) editOrder(originalOrder);
+                                   }}
+                                   className="h-8 w-8 p-0 hover:bg-primary/10"
+                                 >
+                                   <Edit2 className="w-3 h-3" />
+                                 </Button>
+                                 <Button
+                                   variant="ghost"
+                                   size="sm"
+                                   onClick={() => deleteOrder(order.id)}
+                                   className="h-8 w-8 p-0 hover:bg-destructive/10 text-destructive"
+                                 >
+                                   <Trash2 className="w-3 h-3" />
+                                 </Button>
                                </div>
                              </div>
-                           );
-                         })}
+                             <div className="text-sm text-muted-foreground space-y-1">
+                               {order.items.map((item, idx) => (
+                                 <div key={idx} className="flex justify-between items-center">
+                                   <span>{item.menuItem.name} ({item.quantity}x)</span>
+                                   <span>Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
+                                 </div>
+                               ))}
+                             </div>
+                             {order.notes && (
+                               <div className="text-sm text-muted-foreground italic flex items-center gap-1">
+                                 <StickyNote className="w-3 h-3" />
+                                 {order.notes}
+                               </div>
+                             )}
+                             <div className="font-medium text-primary">
+                               Subtotal: Rp {order.items.reduce((total, item) => total + (item.menuItem.price * item.quantity), 0).toLocaleString('id-ID')}
+                             </div>
+                           </div>
+                         ))}
                        </div>
-                      {order.notes && (
-                        <div className="text-sm text-muted-foreground italic flex items-center gap-1">
-                          <StickyNote className="w-3 h-3" />
-                          {order.notes}
-                        </div>
-                      )}
-                      <div className="font-medium text-primary">
-                        Rp {order.total.toLocaleString('id-ID')}
-                      </div>
-                    </div>
-                  ))}
+                     ));
+                   })()}
                   
                   <Separator />
                   <div className="flex justify-between items-center font-bold text-lg">
