@@ -86,71 +86,75 @@ const Index = () => {
           </div>
 
           {/* How it Works */}
-          <div className="max-w-4xl mx-auto mb-16">
-            <div className="text-center mb-8">
+          <div className="max-w-5xl mx-auto mb-16">
+            <div className="text-center mb-12">
               <h2 className="text-2xl font-semibold mb-3 text-foreground">Cara Kerja</h2>
-              <p className="text-muted-foreground">Tiga langkah mudah untuk memulai grup order</p>
+              <p className="text-muted-foreground">Tiga langkah sederhana untuk memulai</p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8 relative">
-              {/* Connection Lines */}
-              <div className="hidden md:block absolute top-16 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-primary via-secondary to-success opacity-20"></div>
-              
+            <div className="grid md:grid-cols-3 gap-8">
               {/* Step 1 */}
-              <div className="relative group">
-                <div className="absolute -top-3 -left-3 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
-                  1
-                </div>
-                <Card className="relative overflow-hidden border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-500 hover:scale-105 hover:shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <CardContent className="p-6 text-center relative z-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl mb-4 shadow-lg group-hover:shadow-primary/25 transition-shadow duration-500">
-                      <PlusCircle className="w-8 h-8 text-white" />
+              <div className="relative">
+                <div className="flex flex-col items-center text-center space-y-4 p-6">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full flex items-center justify-center border border-primary/20">
+                      <PlusCircle className="w-7 h-7 text-primary" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-foreground">Buat Sesi</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Tambahkan merchant GoFood favorit dan buat sesi pemesanan grup baru
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                      1
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-foreground">Buat Sesi</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+                      Tambahkan merchant GoFood favorit dan buat sesi pemesanan grup
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+                {/* Connection line to next step */}
+                <div className="hidden md:block absolute top-12 left-full w-8 h-px bg-gradient-to-r from-primary/30 to-transparent"></div>
               </div>
 
               {/* Step 2 */}
-              <div className="relative group">
-                <div className="absolute -top-3 -left-3 w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
-                  2
-                </div>
-                <Card className="relative overflow-hidden border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-500 hover:scale-105 hover:shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <CardContent className="p-6 text-center relative z-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-secondary to-secondary/80 rounded-2xl mb-4 shadow-lg group-hover:shadow-secondary/25 transition-shadow duration-500">
-                      <Share2 className="w-8 h-8 text-white" />
+              <div className="relative">
+                <div className="flex flex-col items-center text-center space-y-4 p-6">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-gradient-to-br from-secondary/10 to-secondary/5 rounded-full flex items-center justify-center border border-secondary/20">
+                      <Share2 className="w-7 h-7 text-secondary" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-foreground">Bagikan Link</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-secondary rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                      2
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-foreground">Bagikan Link</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
                       Kirim link ke grup WhatsApp dan ajak teman untuk pesan bersama
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+                {/* Connection line to next step */}
+                <div className="hidden md:block absolute top-12 left-full w-8 h-px bg-gradient-to-r from-secondary/30 to-transparent"></div>
               </div>
 
               {/* Step 3 */}
-              <div className="relative group">
-                <div className="absolute -top-3 -left-3 w-8 h-8 bg-success rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
-                  3
-                </div>
-                <Card className="relative overflow-hidden border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-500 hover:scale-105 hover:shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <CardContent className="p-6 text-center relative z-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-success to-success/80 rounded-2xl mb-4 shadow-lg group-hover:shadow-success/25 transition-shadow duration-500">
-                      <ShoppingBag className="w-8 h-8 text-white" />
+              <div className="relative">
+                <div className="flex flex-col items-center text-center space-y-4 p-6">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-gradient-to-br from-success/10 to-success/5 rounded-full flex items-center justify-center border border-success/20">
+                      <ShoppingBag className="w-7 h-7 text-success" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-foreground">Kumpulkan Order</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-success rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                      3
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-foreground">Kumpulkan Order</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
                       Lihat ringkasan semua pesanan dan pesan langsung ke GoFood
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
