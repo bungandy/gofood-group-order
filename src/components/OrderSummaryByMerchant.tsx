@@ -36,6 +36,7 @@ interface OrderSummaryByMerchantProps {
   onEditOrder?: (order: Order) => void;
   onDeleteOrder?: (orderId: string) => void;
   showDeliveryFee?: boolean;
+  merchantDeliveryFees?: Record<string, number>;
   compact?: boolean;
 }
 
@@ -45,9 +46,13 @@ export const OrderSummaryByMerchant = ({
   onEditOrder, 
   onDeleteOrder, 
   showDeliveryFee = false,
+  merchantDeliveryFees: externalDeliveryFees,
   compact = false
 }: OrderSummaryByMerchantProps) => {
-  const [merchantDeliveryFees, setMerchantDeliveryFees] = useState<Record<string, number>>({});
+  const [internalDeliveryFees, setInternalDeliveryFees] = useState<Record<string, number>>({});
+  
+  // Use external delivery fees if provided, otherwise use internal state
+  const merchantDeliveryFees = externalDeliveryFees || internalDeliveryFees;
 
   // Group orders by merchant
   const groupedOrders = orders.reduce((acc, order) => {
@@ -83,6 +88,13 @@ export const OrderSummaryByMerchant = ({
     }, 0);
     return acc;
   }, {} as Record<string, number>);
+
+  // Calculate delivery fee per person for each merchant
+  const getDeliveryFeePerPerson = (merchantName: string) => {
+    const merchantTotalFee = merchantDeliveryFees[merchantName] || 0;
+    const peopleCount = groupedOrders[merchantName]?.length || 0;
+    return peopleCount > 0 ? merchantTotalFee / peopleCount : 0;
+  };
 
   const totalAmount = orders.reduce((sum, order) => sum + order.total, 0);
   const totalDeliveryFees = Object.values(merchantDeliveryFees).reduce((sum, fee) => sum + fee, 0);
@@ -174,11 +186,16 @@ export const OrderSummaryByMerchant = ({
                   )}
                   <div className="text-sm font-medium text-primary mt-1">
                     Subtotal: Rp {order.items.reduce((total, item) => total + (item.menuItem.price * item.quantity), 0).toLocaleString('id-ID')}
+                    {showDeliveryFee && externalDeliveryFees && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Ongkir: Rp {getDeliveryFeePerPerson(merchantName).toLocaleString('id-ID')}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
               
-              {showDeliveryFee && (
+              {showDeliveryFee && !externalDeliveryFees && (
                 <div className="space-y-2 mt-3">
                   <Label htmlFor={`delivery-fee-${merchantName}`}>
                     Ongkos Pengiriman {merchantName} (Opsional)
@@ -187,10 +204,10 @@ export const OrderSummaryByMerchant = ({
                     id={`delivery-fee-${merchantName}`}
                     type="number"
                     placeholder="Masukkan tarif ongkir (Rp)"
-                    value={merchantDeliveryFees[merchantName] || ''}
+                    value={internalDeliveryFees[merchantName] || ''}
                     onChange={(e) => {
                       const fee = Number(e.target.value) || 0;
-                      setMerchantDeliveryFees(prev => ({
+                      setInternalDeliveryFees(prev => ({
                         ...prev,
                         [merchantName]: fee
                       }));
@@ -200,8 +217,8 @@ export const OrderSummaryByMerchant = ({
               )}
               
               <div className="flex justify-between items-center font-medium text-primary border-t pt-2">
-                <span>{showDeliveryFee ? 'Subtotal + Ongkir:' : 'Subtotal:'}</span>
-                <span>Rp {((merchantSubtotals[merchantName] || 0) + (showDeliveryFee ? (merchantDeliveryFees[merchantName] || 0) : 0)).toLocaleString('id-ID')}</span>
+                <span>{showDeliveryFee && externalDeliveryFees ? 'Subtotal per merchant:' : showDeliveryFee ? 'Subtotal + Ongkir:' : 'Subtotal:'}</span>
+                <span>Rp {((merchantSubtotals[merchantName] || 0) + (showDeliveryFee && !externalDeliveryFees ? (merchantDeliveryFees[merchantName] || 0) : 0)).toLocaleString('id-ID')}</span>
               </div>
             </div>
           </div>

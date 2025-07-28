@@ -428,6 +428,7 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
              orders={orders}
              merchants={merchants}
              showDeliveryFee={true}
+             merchantDeliveryFees={merchantDeliveryFees}
            />
         </div>
       </div>
