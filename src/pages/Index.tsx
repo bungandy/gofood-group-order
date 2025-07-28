@@ -55,6 +55,11 @@ const Index = () => {
       const sessionName = validMerchants.length === 1 ? validMerchants[0].name : `${validMerchants.length} Merchant`;
       const sessionId = await createSession(sessionName, validMerchants);
 
+      toast({
+        title: "Sesi berhasil dibuat!",
+        description: `Session ID: ${sessionId}. Redirect dinonaktifkan untuk debugging.`,
+      });
+
       // Navigate to ordering page - disabled for debugging
       // setTimeout(() => {
       //   navigate(`/order/${sessionId}`);
