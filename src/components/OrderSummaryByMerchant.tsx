@@ -125,7 +125,9 @@ export const OrderSummaryByMerchant = ({
       <CardContent className="space-y-4">
         {Object.entries(groupedOrders).map(([merchantName, merchantOrders]) => {
           const isExpanded = expandedMerchants[merchantName];
+          const totalMerchants = Object.keys(groupedOrders).length;
           const hasMultipleOrders = merchantOrders.length > 2;
+          const shouldShowCollapse = totalMerchants > 1 && hasMultipleOrders; // Only show collapse if multiple merchants AND multiple orders
           
           return (
             <div key={merchantName} className="border border-primary/20 rounded-lg p-3 bg-muted/20">
@@ -134,7 +136,7 @@ export const OrderSummaryByMerchant = ({
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
                   {merchantName}
                 </div>
-                {hasMultipleOrders && (
+                {shouldShowCollapse && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -149,7 +151,7 @@ export const OrderSummaryByMerchant = ({
               <div className="relative ml-4">
                 <div 
                   className={`space-y-2 overflow-hidden transition-all duration-300 ${
-                    !hasMultipleOrders || isExpanded ? '' : 'max-h-[200px]'
+                    !shouldShowCollapse || isExpanded ? '' : 'max-h-[200px]'
                   }`}
                 >
                   {merchantOrders.map((order) => (
@@ -219,7 +221,7 @@ export const OrderSummaryByMerchant = ({
                 </div>
                 
                 {/* Gradient overlay when collapsed */}
-                {hasMultipleOrders && !isExpanded && (
+                {shouldShowCollapse && !isExpanded && (
                   <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-muted/40 to-transparent pointer-events-none" />
                 )}
               </div>
