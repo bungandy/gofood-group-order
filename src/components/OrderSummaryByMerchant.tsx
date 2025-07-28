@@ -240,7 +240,7 @@ export const OrderSummaryByMerchant = ({
         
         <Separator />
         <div className="flex justify-between items-center font-bold text-lg">
-          <span>{showDeliveryFee ? 'Total Keseluruhan:' : 'Total Semua Pesanan:'}</span>
+          <span>Perkiraan Total Pesanan:</span>
           <span className="text-primary">Rp {(totalAmount + (showDeliveryFee ? totalDeliveryFees : 0)).toLocaleString('id-ID')}</span>
         </div>
       </CardContent>
