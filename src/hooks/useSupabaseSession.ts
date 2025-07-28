@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { GofoodApiService, GofoodMerchantData } from '@/utils/gofoodApi';
 
 interface Merchant {
   id: string;
@@ -100,6 +99,41 @@ export const useSupabaseSession = (sessionId?: string) => {
     }
   };
 
+  const fetchMerchantDataFromProxy = async (gofoodUrl: string, merchantId: string, sessionId: string) => {
+    try {
+      const proxyUrl = `http://localhost:3000/get-restaurant?url=${encodeURIComponent(gofoodUrl)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Custom API proxy error: ${response.status} ${response.statusText}`);
+      }
+      
+      const merchantData = await response.json();
+      
+      // Save merchant data to database
+      const { error: updateError } = await supabase
+        .from('merchants')
+        .update({
+          merchant_data: merchantData
+        })
+        .eq('session_id', sessionId)
+        .eq('merchant_id', merchantId);
+
+      if (updateError) {
+        throw new Error(`Failed to update merchant data: ${updateError.message}`);
+      }
+
+      return merchantData;
+    } catch (error) {
+      console.error(`Error fetching data for ${merchantId}:`, error);
+      
+      // Log error (database schema doesn't support error tracking fields)
+      console.error('Failed to fetch merchant data, but continuing...');
+      
+      throw error;
+    }
+  };
+
   const createSession = async (sessionName: string, merchants: Omit<Merchant, 'id'>[]) => {
     try {
       setLoading(true);
@@ -131,23 +165,12 @@ export const useSupabaseSession = (sessionId?: string) => {
 
       if (merchantsError) throw merchantsError;
 
-      // Fetch merchant data from GoFood API for each merchant
+      // Fetch merchant data from custom API proxy for each merchant
       for (const merchant of merchantData) {
         try {
           console.log(`Fetching data for merchant: ${merchant.merchant_id}`);
-          const { data, error } = await supabase.functions.invoke('gofood-proxy', {
-            body: {
-              gofoodUrl: merchant.link,
-              merchantId: merchant.merchant_id,
-              sessionId: sessionId
-            }
-          });
-
-          if (error) {
-            console.error(`Error fetching data for ${merchant.merchant_id}:`, error);
-          } else {
-            console.log(`Successfully fetched data for ${merchant.merchant_id}:`, data);
-          }
+          await fetchMerchantDataFromProxy(merchant.link, merchant.merchant_id, sessionId);
+          console.log(`Successfully fetched data for ${merchant.merchant_id}`);
         } catch (proxyError) {
           console.error(`Proxy error for ${merchant.merchant_id}:`, proxyError);
           // Continue with other merchants even if one fails
@@ -178,37 +201,20 @@ export const useSupabaseSession = (sessionId?: string) => {
     try {
       setLoading(true);
       
-      // Validate GoFood URL
-      if (!GofoodApiService.isValidGofoodUrl(gofoodUrl)) {
-        throw new Error('URL GoFood tidak valid');
+      if (!sessionId) {
+        throw new Error('Session ID is required');
       }
-
-      // Fetch merchant data from GoFood API
-      const merchantData = await GofoodApiService.fetchMerchantData(gofoodUrl);
-      if (!merchantData) {
-        throw new Error('Gagal mengambil data merchant dari GoFood API');
-      }
-
-      // Update merchant in database with fetched data
-      const { error: updateError } = await supabase
-        .from('merchants')
-        .update({ 
-          merchant_data: merchantData as any,
-          name: merchantData.restaurant?.name || 'Unknown Merchant'
-        })
-        .eq('merchant_id', merchantId);
-
-      if (updateError) throw updateError;
+      
+      // Use custom API proxy to fetch merchant data
+      const merchantData = await fetchMerchantDataFromProxy(gofoodUrl, merchantId, sessionId);
 
       toast({
         title: 'Data merchant berhasil diperbarui!',
-        description: `Data untuk ${merchantData.restaurant?.name} telah disimpan`,
+        description: `Data untuk ${merchantData?.restaurant?.name || 'merchant'} telah disimpan`,
       });
 
       // Refresh session data
-      if (sessionId) {
-        await loadSession(sessionId);
-      }
+      await loadSession(sessionId);
 
       return merchantData;
     } catch (err: any) {

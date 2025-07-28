@@ -1,38 +1,10 @@
-export interface GofoodMerchantData {
-  restaurant: {
-    id: string;
-    name: string;
-    image_url?: string;
-    description?: string;
-    rating?: number;
-    delivery_fee?: number;
-    min_order?: number;
-    categories?: string[];
-    menu?: any[];
-  };
-}
+import type { GofoodMerchantData } from '@/types';
+import { API_CONFIG } from '@/constants';
+import { extractRestaurantId, isValidGofoodUrl } from '@/utils';
+import axios from 'axios';
+import { supabase } from '@/integrations/supabase/client';
 
 export class GofoodApiService {
-  private static readonly API_BASE_URL = 'https://api.gojekapi.com/gofood/consumer/v5/restaurants';
-  private static readonly AUTH_TOKEN = 'eyJhbGciOiJkaXIiLCJjdHkiOiJKV1QiLCJlbmMiOiJBMTI4R0NNIiwidHlwIjoiSldUIiwiemlwIjoiREVGIn0..OWL0Ul4brzZjMwhc.DRe5zO4xm25iaR9hgbFnjQ9VarjKoKC0kAWoIlf6fVLDzaoqUA7sISuCyYb83DompahxEgmffOf7sQOPbeEc3c2z6ARPwFS3V6OlEvEX8MjFAX5cpzFMJ_iFN-wKWWA5a3__-HIMbtI-Lq71Ohn67ACRntZDajTgcmBSnjGAB9FoL4J6Z6-ry_nz61jq_NM-CP963b_nfb6m_dI_TdF9FBdfAshyWpiVQJcP4_u5SrBbAk9AQRwYKJLRUtWvwNEn5Nx65vNTsnE1Qfd_A3_ubhx1uSNBAc1VK44iYdN2fMY7JdI7xFz7QiZH28wfRxRLccf9igNY2yoO7OOH9oHO4BHiIJ5anFOhyGyleLoZBUI38l6aF6og0OBlgcG2qpXfaodnQ05k-_Q9FL0a4LHlf0TZMOu4wAGclx-kNIMZ6C6pzWTObp2lS2ENXaEpq3rW9ZxusIng3vRiNuKVrXVlxN-tglb8552W7WFFoNRy0y_Mxo8LwJUEWqFnvGm-dsA0S7SnNfut1g29jmkgW2EmKWfKr1i7-nB-vxlgkljeA_z4XQjNd0jrQHRbwd0LQT735FdCxdI8_qPA1VRcKNvx48sKlL9S3L2iBU3cPNjtyqhBOl8DTMMl2jejgcAaaEso-5QjRQePVwnaBugZoc6mQ-pFScc9BNVcVCm0bj7UcxgIuUUxH9rLAEtgR8NrU93Yc1NO7ih0vTB_cqlCjqQFOTrfuiCckhu1OGRLT184oEui950b0dV22t_ou341himF_GbxbyWA1ZYV3h6uzFSyQQFfUDS_EIar1_5596fHIHM9IRpIrjMQWh5_JTloPgdPwFMcSVgobwvNQbuhddYuGO5R8LQS2R76VnuQPiyZ4ZxucFjUPqd9Tzmw3pHOP4qUyQGcHNFVN2tcQhdOSKNWymIsXRg3-X5mzorrt6pQxOR7Xoa1q_Zzxh5uMmk5mkaPMmE.POHpRDKClBxvJ42dE6fmpg';
-  private static readonly DEFAULT_LOCATION = '-6.2032022,106.715'; // Jakarta coordinates
-
-  /**
-   * Extract restaurant ID from GoFood URL
-   * @param url GoFood restaurant URL
-   * @returns Restaurant ID or null if not found
-   */
-  static extractRestaurantId(url: string): string | null {
-    try {
-      // Pattern: https://gofood.co.id/jakarta/restaurant/restaurant-name-uuid
-      const urlPattern = /\/restaurant\/[^\/]*-([a-f0-9-]{36})$/i;
-      const match = url.match(urlPattern);
-      return match ? match[1] : null;
-    } catch (error) {
-      console.error('Error extracting restaurant ID:', error);
-      return null;
-    }
-  }
 
   /**
    * Convert GoFood URL to API URL
@@ -40,12 +12,12 @@ export class GofoodApiService {
    * @returns API URL or null if conversion failed
    */
   static convertToApiUrl(gofoodUrl: string): string | null {
-    const restaurantId = this.extractRestaurantId(gofoodUrl);
+    const restaurantId = extractRestaurantId(gofoodUrl);
     if (!restaurantId) {
       return null;
     }
 
-    return `${this.API_BASE_URL}/${restaurantId}?picked_loc=${encodeURIComponent(this.DEFAULT_LOCATION)}`;
+    return `${API_CONFIG.GOFOOD_BASE_URL}/${restaurantId}?picked_loc=${encodeURIComponent(API_CONFIG.DEFAULT_LOCATION)}`;
   }
 
   /**
@@ -62,10 +34,9 @@ export class GofoodApiService {
 
       console.log('Fetching merchant data from:', apiUrl);
 
-      const response = await fetch(apiUrl, {
-        method: 'GET',
+      const response = await axios.get(apiUrl, {
         headers: {
-          'Authorization': `Bearer ${this.AUTH_TOKEN}`,
+          'Authorization': `Bearer ${API_CONFIG.AUTH_TOKEN}`,
           'Content-Type': 'application/json',
 
           // Device & App Info
@@ -78,7 +49,7 @@ export class GofoodApiService {
           'User-Agent': 'Gojek/5.24.1 (com.go-jek.ios; build:149285589; iOS 18.5.0) NetworkSDK/2.4.1',
 
           // Location & Regional
-          'X-Location': this.DEFAULT_LOCATION,
+          'X-Location': API_CONFIG.DEFAULT_LOCATION,
           'X-Origin-Location': '',
           'X-Location-Accuracy': '8.508432448047834',
           'Gojek-Country-Code': 'ID',
@@ -98,15 +69,73 @@ export class GofoodApiService {
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`API request failed with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data as GofoodMerchantData;
+      return response.data as GofoodMerchantData;
     } catch (error) {
       console.error('Error fetching merchant data:', error);
+      
+      // Handle axios errors specifically
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error details:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data
+        });
+      }
+      
       return null;
+    }
+  }
+
+  /**
+   * Fetch merchant data and save to Supabase database
+   * @param gofoodUrl Original GoFood URL
+   * @param merchantId Merchant ID in the database
+   * @param sessionId Session ID
+   * @returns Success status and data
+   */
+  static async fetchAndSaveMerchantData(
+    gofoodUrl: string, 
+    merchantId: string, 
+    sessionId: string
+  ): Promise<{ success: boolean; data?: GofoodMerchantData; error?: string }> {
+    try {
+      console.log(`Fetching data for merchant: ${merchantId}`);
+      
+      // Fetch merchant data from GoFood API
+      const merchantData = await this.fetchMerchantData(gofoodUrl);
+      
+      if (!merchantData) {
+        throw new Error('Failed to fetch merchant data from GoFood API');
+      }
+
+      // Save to Supabase database
+      const { error: updateError } = await supabase
+        .from('merchants')
+        .update({
+          merchant_data: merchantData
+        })
+        .eq('session_id', sessionId)
+        .eq('merchant_id', merchantId);
+
+      if (updateError) {
+        console.error('Database update error:', updateError);
+        throw new Error(`Failed to update merchant data: ${updateError.message}`);
+      }
+
+      console.log(`Successfully fetched and saved data for ${merchantId}`);
+      
+      return {
+        success: true,
+        data: merchantData
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error(`Error fetching and saving data for ${merchantId}:`, errorMessage);
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
     }
   }
 
@@ -115,12 +144,5 @@ export class GofoodApiService {
    * @param url URL to validate
    * @returns True if valid GoFood URL
    */
-  static isValidGofoodUrl(url: string): boolean {
-    try {
-      const gofoodPattern = /^https:\/\/gofood\.co\.id\/[^\/]+\/restaurant\/[^\/]+-[a-f0-9-]{36}$/i;
-      return gofoodPattern.test(url);
-    } catch {
-      return false;
-    }
-  }
+  static isValidGofoodUrl = isValidGofoodUrl;
 }

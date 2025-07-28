@@ -1,30 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Order, OrderItem, UseOrdersReturn } from '@/types';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
+import { generateId } from '@/utils';
 
-interface MenuItem {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-  merchantId: string;
-}
-
-interface OrderItem {
-  menuItem: MenuItem;
-  quantity: number;
-}
-
-interface Order {
-  id: string;
-  customerName: string;
-  items: OrderItem[];
-  notes?: string;
-  total: number;
-  timestamp: string;
-}
-
-export const useSupabaseOrders = (sessionId?: string) => {
+export const useSupabaseOrders = (sessionId?: string): UseOrdersReturn => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +60,7 @@ export const useSupabaseOrders = (sessionId?: string) => {
       console.error('Error loading orders:', err);
       setError(err.message);
       toast({
-        title: 'Gagal memuat pesanan',
+        title: ERROR_MESSAGES.FAILED_TO_LOAD_SESSION,
         description: 'Terjadi kesalahan saat memuat data pesanan',
         variant: 'destructive',
       });
@@ -95,7 +76,7 @@ export const useSupabaseOrders = (sessionId?: string) => {
       setLoading(true);
       setError(null);
 
-      const orderId = Math.random().toString(36).substring(2, 15);
+      const orderId = generateId();
 
       // Create order
       const { error: orderError } = await supabase
@@ -131,7 +112,7 @@ export const useSupabaseOrders = (sessionId?: string) => {
       await loadOrders(sessionId);
 
       toast({
-        title: 'Pesanan berhasil ditambahkan!',
+        title: SUCCESS_MESSAGES.ORDER_ADDED,
         description: `Pesanan atas nama ${orderData.customerName} telah disimpan`,
       });
     } catch (err: any) {

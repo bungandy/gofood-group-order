@@ -18,5 +18,4 @@ refresh_token_reuse_interval = 10
 enable_signup = true
 enable_anonymous_sign_ins = false
 
-[functions.gofood-proxy]
-verify_jwt = false
+

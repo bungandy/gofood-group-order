@@ -61,9 +61,9 @@ const Index = () => {
       });
 
       // Navigate to ordering page - disabled for debugging
-      setTimeout(() => {
-        navigate(`/order/${sessionId}`);
-      }, 1000);
+      // setTimeout(() => {
+      //   navigate(`/order/${sessionId}`);
+      // }, 1000);
     } catch (error) {
       // Error handling is done in the hook
       console.error('Failed to create session:', error);
@@ -88,6 +88,8 @@ const Index = () => {
               Bikin acara makan bareng jadi lebih seru! Kumpulkan pesanan GoFood dari semua teman dengan mudah dan efisien.
             </p>
           </div>
+
+
 
           {/* How it Works */}
           <div className="max-w-5xl mx-auto mb-16">
