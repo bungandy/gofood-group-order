@@ -18,9 +18,14 @@ serve(async (req) => {
     
     console.log('Received request:', { gofoodUrl, merchantId, sessionId });
 
-    // Extract restaurant ID from GoFood URL
-    const urlPattern = /restaurant\/[^\/]+-([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/;
-    const match = gofoodUrl.match(urlPattern);
+    // Extract restaurant ID from GoFood URL - support both restaurant and brand URLs
+    const restaurantPattern = /restaurant\/[^\/]+-([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/;
+    const brandPattern = /restaurants\/brand\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/;
+    
+    let match = gofoodUrl.match(restaurantPattern);
+    if (!match) {
+      match = gofoodUrl.match(brandPattern);
+    }
     
     if (!match) {
       throw new Error('Invalid GoFood URL format');

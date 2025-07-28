@@ -77,7 +77,7 @@ export class GofoodApiService {
           'User-Agent': 'Gojek/5.24.1 (com.go-jek.ios; build:149285589; iOS 18.5.0) NetworkSDK/2.4.1',
 
           // Location & Regional
-          'X-Location': DEFAULT_LOCATION,
+          'X-Location': this.DEFAULT_LOCATION,
           'X-Origin-Location': '',
           'X-Location-Accuracy': '8.508432448047834',
           'Gojek-Country-Code': 'ID',
