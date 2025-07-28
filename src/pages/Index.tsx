@@ -9,47 +9,52 @@ import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/Footer";
 import { useSupabaseSession } from "@/hooks/useSupabaseSession";
 import { GofoodUrlForm } from "@/components/GofoodUrlForm";
-
 const Index = () => {
-  const [merchants, setMerchants] = useState([{ name: "", link: "" }]);
-  const { toast } = useToast();
+  const [merchants, setMerchants] = useState([{
+    name: "",
+    link: ""
+  }]);
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
-  const { createSession, loading } = useSupabaseSession();
-
+  const {
+    createSession,
+    loading
+  } = useSupabaseSession();
   const addMerchant = () => {
-    setMerchants([...merchants, { name: "", link: "" }]);
+    setMerchants([...merchants, {
+      name: "",
+      link: ""
+    }]);
   };
-
   const removeMerchant = (index: number) => {
     if (merchants.length > 1) {
       setMerchants(merchants.filter((_, i) => i !== index));
     }
   };
-
   const updateMerchant = (index: number, field: "name" | "link", value: string) => {
-    const updated = merchants.map((merchant, i) => 
-      i === index ? { ...merchant, [field]: value } : merchant
-    );
+    const updated = merchants.map((merchant, i) => i === index ? {
+      ...merchant,
+      [field]: value
+    } : merchant);
     setMerchants(updated);
   };
-
   const handleCreateSession = async () => {
     // Validate that at least one merchant has both name and link
     const validMerchants = merchants.filter(m => m.name.trim() && m.link.trim());
-    
     if (validMerchants.length === 0) {
       toast({
         title: "Form tidak lengkap",
         description: "Silakan isi minimal satu merchant dengan nama dan link GoFood",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-    
     try {
       const sessionName = validMerchants.length === 1 ? validMerchants[0].name : `${validMerchants.length} Merchant`;
       const sessionId = await createSession(sessionName, validMerchants);
-      
+
       // Navigate to ordering page
       setTimeout(() => {
         navigate(`/order/${sessionId}`);
@@ -59,9 +64,7 @@ const Index = () => {
       console.error('Failed to create session:', error);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 opacity-50">
@@ -167,59 +170,31 @@ const Index = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {merchants.map((merchant, index) => (
-                <div key={index} className="space-y-3 p-4 border rounded-lg bg-background/50">
+              {merchants.map((merchant, index) => <div key={index} className="space-y-3 p-4 border rounded-lg bg-background/50">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium">
                       Merchant {index + 1}
                     </Label>
-                    {merchants.length > 1 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeMerchant(index)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
+                    {merchants.length > 1 && <Button variant="outline" size="sm" onClick={() => removeMerchant(index)} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
+                      </Button>}
                   </div>
                   
                   <div className="space-y-2">
-                    <Input
-                      placeholder="Contoh: Warteg Bahari"
-                      value={merchant.name}
-                      onChange={(e) => updateMerchant(index, "name", e.target.value)}
-                      className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                    />
+                    <Input placeholder="Contoh: Warteg Bahari" value={merchant.name} onChange={e => updateMerchant(index, "name", e.target.value)} className="transition-all duration-200 focus:ring-2 focus:ring-primary/20" />
                   </div>
                   
                   <div className="space-y-2">
-                    <Input
-                      placeholder="https://gofood.co.id/restaurant/..."
-                      value={merchant.link}
-                      onChange={(e) => updateMerchant(index, "link", e.target.value)}
-                      className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                    />
+                    <Input placeholder="https://gofood.co.id/restaurant/..." value={merchant.link} onChange={e => updateMerchant(index, "link", e.target.value)} className="transition-all duration-200 focus:ring-2 focus:ring-primary/20" />
                   </div>
-                </div>
-              ))}
+                </div>)}
               
-              <Button
-                variant="outline"
-                onClick={addMerchant}
-                className="w-full border-dashed border-primary/30 hover:border-primary hover:bg-primary/10 hover:scale-[1.02] transition-all duration-300 text-primary hover:text-primary"
-              >
+              <Button variant="outline" onClick={addMerchant} className="w-full border-dashed border-primary/30 hover:border-primary hover:bg-primary/10 hover:scale-[1.02] transition-all duration-300 text-primary hover:text-primary">
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Tambah Merchant
               </Button>
               
-              <Button 
-                onClick={handleCreateSession}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-primary to-primary-hover hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
-                size="lg"
-              >
+              <Button onClick={handleCreateSession} disabled={loading} className="w-full bg-gradient-to-r from-primary to-primary-hover hover:shadow-lg transition-all duration-300 hover:scale-[1.02]" size="lg">
                 <Users className="w-4 h-4 mr-2" />
                 Buat Sesi Pemesanan
               </Button>
@@ -227,14 +202,10 @@ const Index = () => {
           </Card>
 
           {/* GoFood URL Import Section */}
-          <div className="mt-16">
-            <GofoodUrlForm />
-          </div>
+          
         </div>
       </div>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
