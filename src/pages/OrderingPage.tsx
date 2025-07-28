@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3, Edit2, Trash2, StickyNote } from "lucide-react";
+import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3, Edit2, Trash2, StickyNote, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 // import { GroupChat } from "@/components/GroupChat"; // Temporarily disabled for next phase
 
@@ -46,6 +46,19 @@ const OrderingPage = () => {
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [expandedMerchants, setExpandedMerchants] = useState<Set<string>>(new Set());
+
+  const toggleMerchantExpansion = (merchantId: string) => {
+    setExpandedMerchants(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(merchantId)) {
+        newSet.delete(merchantId);
+      } else {
+        newSet.add(merchantId);
+      }
+      return newSet;
+    });
+  };
   const { toast } = useToast();
 
   // Load session data and existing orders on component mount
@@ -293,44 +306,76 @@ const OrderingPage = () => {
                         <CardDescription>{merchantMenus.length} menu tersedia</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid gap-3">
-                          {merchantMenus.map((item) => {
-                            const cartItem = cart.find(c => c.menuItem.id === item.id);
-                            const quantity = cartItem?.quantity || 0;
-                            
-                            return (
-                              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover:shadow-sm">
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{item.name}</h4>
-                                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                                  <p className="font-medium text-primary mt-1">
-                                    Rp {item.price.toLocaleString('id-ID')}
-                                  </p>
+                        <div className="relative">
+                          <div className="grid gap-3">
+                            {merchantMenus.slice(0, expandedMerchants.has(merchant.id) ? merchantMenus.length : 5).map((item) => {
+                              const cartItem = cart.find(c => c.menuItem.id === item.id);
+                              const quantity = cartItem?.quantity || 0;
+                              
+                              return (
+                                <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover:shadow-sm">
+                                  <div className="flex-1">
+                                    <h4 className="font-medium">{item.name}</h4>
+                                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                                    <p className="font-medium text-primary mt-1">
+                                      Rp {item.price.toLocaleString('id-ID')}
+                                    </p>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => removeFromCart(item.id)}
+                                      disabled={quantity === 0}
+                                      className="hover-scale"
+                                    >
+                                      <Minus className="w-4 h-4" />
+                                    </Button>
+                                    <span className="w-8 text-center font-medium">{quantity}</span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => addToCart(item)}
+                                      className="hover-scale"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                 </div>
-                                
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => removeFromCart(item.id)}
-                                    disabled={quantity === 0}
-                                    className="hover-scale"
-                                  >
-                                    <Minus className="w-4 h-4" />
-                                  </Button>
-                                  <span className="w-8 text-center font-medium">{quantity}</span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => addToCart(item)}
-                                    className="hover-scale"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
+                          
+                          {/* Gradient fade effect and expand button */}
+                          {merchantMenus.length > 5 && !expandedMerchants.has(merchant.id) && (
+                            <div className="relative">
+                              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
+                            </div>
+                          )}
+                          
+                          {merchantMenus.length > 5 && (
+                            <div className="flex justify-center mt-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleMerchantExpansion(merchant.id)}
+                                className="text-primary hover:text-primary"
+                              >
+                                {expandedMerchants.has(merchant.id) ? (
+                                  <>
+                                    <ChevronUp className="w-4 h-4 mr-1" />
+                                    Tampilkan Lebih Sedikit
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="w-4 h-4 mr-1" />
+                                    Tampilkan Semua ({merchantMenus.length - 5} lainnya)
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
