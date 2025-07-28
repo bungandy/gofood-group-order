@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3, Edit2, Trash2 } from "lucide-react";
+import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3, Edit2, Trash2, StickyNote } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { GroupChat } from "@/components/GroupChat";
 
@@ -398,8 +398,9 @@ const OrderingPage = () => {
                         ).join(', ')}
                       </div>
                       {order.notes && (
-                        <div className="text-sm text-muted-foreground italic">
-                          Catatan: {order.notes}
+                        <div className="text-sm text-muted-foreground italic flex items-center gap-1">
+                          <StickyNote className="w-3 h-3" />
+                          {order.notes}
                         </div>
                       )}
                       <div className="font-medium text-primary">
