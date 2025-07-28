@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Users, Share2, ShoppingBag, Utensils, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/Footer";
 
 const Index = () => {
   const [merchants, setMerchants] = useState([{ name: "", link: "" }]);
@@ -230,6 +231,7 @@ const Index = () => {
           </Card>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

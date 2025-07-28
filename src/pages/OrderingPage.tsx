@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3, Edit2, Trash2, StickyNote, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/Footer";
 import { OrderSummaryByMerchant } from "@/components/OrderSummaryByMerchant";
 // import { GroupChat } from "@/components/GroupChat"; // Temporarily disabled for next phase
 
@@ -551,6 +552,7 @@ const OrderingPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

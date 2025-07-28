@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { OrderSummaryByMerchant } from "@/components/OrderSummaryByMerchant";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/Footer";
 
 interface MenuItem {
   id: string;
@@ -430,9 +431,10 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
              showDeliveryFee={true}
              merchantDeliveryFees={merchantDeliveryFees}
            />
-        </div>
-      </div>
-    </div>
+         </div>
+       </div>
+       <Footer />
+     </div>
   );
 };
 
