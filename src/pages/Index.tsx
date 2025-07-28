@@ -55,10 +55,10 @@ const Index = () => {
       const sessionName = validMerchants.length === 1 ? validMerchants[0].name : `${validMerchants.length} Merchant`;
       const sessionId = await createSession(sessionName, validMerchants);
 
-      // Navigate to ordering page
-      setTimeout(() => {
-        navigate(`/order/${sessionId}`);
-      }, 1000);
+      // Navigate to ordering page - disabled for debugging
+      // setTimeout(() => {
+      //   navigate(`/order/${sessionId}`);
+      // }, 1000);
     } catch (error) {
       // Error handling is done in the hook
       console.error('Failed to create session:', error);
@@ -202,7 +202,9 @@ const Index = () => {
           </Card>
 
           {/* GoFood URL Import Section */}
-          
+          <div className="mt-12">
+            <GofoodUrlForm />
+          </div>
         </div>
       </div>
       <Footer />
