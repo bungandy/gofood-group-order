@@ -74,30 +74,13 @@ serve(async (req) => {
       const errorText = await gofoodResponse.text();
       console.error('GoFood API error:', errorText);
       
-      // Use mock data for development when API fails
-      console.log('Using mock data for development...');
+      // Return raw error response for debugging
       gofoodData = {
-        restaurant: {
-          id: restaurantId,
-          name: "Mock Restaurant Data",
-          image_url: "https://via.placeholder.com/300x200",
-          description: "This is mock data because the GoFood API returned an error",
-          rating: 4.5,
-          delivery_fee: 5000,
-          min_order: 25000,
-          categories: ["Fast Food", "Burgers"],
-          menu: [
-            {
-              id: "item1",
-              name: "Mock Burger",
-              price: 25000,
-              description: "Mock menu item",
-              image_url: "https://via.placeholder.com/150x150"
-            }
-          ]
-        },
         api_error: errorText,
-        status: gofoodResponse.status
+        status: gofoodResponse.status,
+        headers: Object.fromEntries(gofoodResponse.headers.entries()),
+        url: apiUrl,
+        restaurant_id: restaurantId
       };
     } else {
       gofoodData = await gofoodResponse.json();
