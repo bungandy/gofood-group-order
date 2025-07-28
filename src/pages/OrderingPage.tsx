@@ -293,14 +293,16 @@ const OrderingPage = () => {
               </Card>
             ) : (
               <div className="space-y-6">
-                {merchants.map((merchant) => {
+                {merchants.map((merchant, index) => {
                   const merchantMenus = menuItems.filter(item => item.merchantId === merchant.id);
                   
                   return (
                     <Card key={merchant.id} className="bg-white/80 backdrop-blur-sm animate-fade-in">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-primary flex items-center gap-2">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
+                            {index + 1}
+                          </div>
                           {merchant.name}
                         </CardTitle>
                         <CardDescription>{merchantMenus.length} menu tersedia</CardDescription>
