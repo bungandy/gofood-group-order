@@ -171,9 +171,30 @@ export const GofoodUrlForm = ({ sessionId }: GofoodUrlFormProps) => {
         {debugResponse && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <h4 className="font-medium text-sm mb-3 text-red-800">Debug Response:</h4>
-            <pre className="text-xs bg-white p-3 rounded border overflow-auto max-h-96 whitespace-pre-wrap">
-              {JSON.stringify(debugResponse, null, 2)}
-            </pre>
+            <div className="space-y-3">
+              {debugResponse.requestHeaders && (
+                <div>
+                  <h5 className="font-medium text-xs text-red-700 mb-1">Request Headers:</h5>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-32 whitespace-pre-wrap">
+                    {JSON.stringify(debugResponse.requestHeaders, null, 2)}
+                  </pre>
+                </div>
+              )}
+              {debugResponse.responseHeaders && (
+                <div>
+                  <h5 className="font-medium text-xs text-red-700 mb-1">Response Headers:</h5>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-32 whitespace-pre-wrap">
+                    {JSON.stringify(debugResponse.responseHeaders, null, 2)}
+                  </pre>
+                </div>
+              )}
+              <div>
+                <h5 className="font-medium text-xs text-red-700 mb-1">Full Response:</h5>
+                <pre className="text-xs bg-white p-3 rounded border overflow-auto max-h-64 whitespace-pre-wrap">
+                  {JSON.stringify(debugResponse, null, 2)}
+                </pre>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>
