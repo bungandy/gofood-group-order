@@ -4,20 +4,39 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Users, Share2, ShoppingBag, Utensils } from "lucide-react";
+import { PlusCircle, Users, Share2, ShoppingBag, Utensils, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const [merchantName, setMerchantName] = useState("");
-  const [merchantLink, setMerchantLink] = useState("");
+  const [merchants, setMerchants] = useState([{ name: "", link: "" }]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const addMerchant = () => {
+    setMerchants([...merchants, { name: "", link: "" }]);
+  };
+
+  const removeMerchant = (index: number) => {
+    if (merchants.length > 1) {
+      setMerchants(merchants.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateMerchant = (index: number, field: "name" | "link", value: string) => {
+    const updated = merchants.map((merchant, i) => 
+      i === index ? { ...merchant, [field]: value } : merchant
+    );
+    setMerchants(updated);
+  };
+
   const handleCreateSession = () => {
-    if (!merchantName || !merchantLink) {
+    // Validate that at least one merchant has both name and link
+    const validMerchants = merchants.filter(m => m.name.trim() && m.link.trim());
+    
+    if (validMerchants.length === 0) {
       toast({
         title: "Form tidak lengkap",
-        description: "Silakan isi nama merchant dan link GoFood",
+        description: "Silakan isi minimal satu merchant dengan nama dan link GoFood",
         variant: "destructive",
       });
       return;
@@ -29,8 +48,8 @@ const Index = () => {
     // Store session data in localStorage for demo purposes
     // In real app, this would be stored in backend/database
     localStorage.setItem(`session_${sessionId}`, JSON.stringify({
-      merchantName,
-      merchantLink,
+      merchants: validMerchants,
+      sessionName: validMerchants.length === 1 ? validMerchants[0].name : `${validMerchants.length} Merchant`,
       createdAt: new Date().toISOString()
     }));
     
@@ -112,45 +131,70 @@ const Index = () => {
           </div>
 
           {/* Create Session Form */}
-          <Card className="max-w-md mx-auto shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <Card className="max-w-lg mx-auto shadow-xl border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader className="text-center">
               <CardTitle className="flex items-center justify-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
                 Buat Sesi Pemesanan
               </CardTitle>
               <CardDescription>
-                Mulai dengan memasukkan informasi merchant GoFood
+                Tambahkan satu atau lebih merchant GoFood untuk sesi grup
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="merchant-name">Nama Merchant</Label>
-                <Input
-                  id="merchant-name"
-                  placeholder="Contoh: Warteg Bahari"
-                  value={merchantName}
-                  onChange={(e) => setMerchantName(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
+              {merchants.map((merchant, index) => (
+                <div key={index} className="space-y-3 p-4 border rounded-lg bg-background/50">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">
+                      Merchant {index + 1}
+                    </Label>
+                    {merchants.length > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeMerchant(index)}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Contoh: Warteg Bahari"
+                      value={merchant.name}
+                      onChange={(e) => updateMerchant(index, "name", e.target.value)}
+                      className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="https://gofood.co.id/restaurant/..."
+                      value={merchant.link}
+                      onChange={(e) => updateMerchant(index, "link", e.target.value)}
+                      className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+              ))}
               
-              <div className="space-y-2">
-                <Label htmlFor="merchant-link">Link GoFood Merchant</Label>
-                <Input
-                  id="merchant-link"
-                  placeholder="https://gofood.co.id/restaurant/..."
-                  value={merchantLink}
-                  onChange={(e) => setMerchantLink(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
+              <Button
+                variant="outline"
+                onClick={addMerchant}
+                className="w-full border-dashed hover:bg-primary/5"
+              >
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Tambah Merchant
+              </Button>
               
               <Button 
                 onClick={handleCreateSession}
                 className="w-full bg-gradient-to-r from-primary to-primary-hover hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
                 size="lg"
               >
-                <PlusCircle className="w-4 h-4 mr-2" />
+                <Users className="w-4 h-4 mr-2" />
                 Buat Sesi Pemesanan
               </Button>
             </CardContent>
