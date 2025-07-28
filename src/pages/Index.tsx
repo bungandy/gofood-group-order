@@ -85,49 +85,74 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="text-center pb-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-3 group-hover:bg-primary/20 transition-colors">
-                  <PlusCircle className="w-6 h-6 text-primary" />
+          {/* How it Works */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-semibold mb-3 text-foreground">Cara Kerja</h2>
+              <p className="text-muted-foreground">Tiga langkah mudah untuk memulai grup order</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8 relative">
+              {/* Connection Lines */}
+              <div className="hidden md:block absolute top-16 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-primary via-secondary to-success opacity-20"></div>
+              
+              {/* Step 1 */}
+              <div className="relative group">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                  1
                 </div>
-                <CardTitle className="text-lg">Buat Sesi</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center">
-                  Pilih merchant GoFood dan buat sesi pemesanan grup baru
-                </CardDescription>
-              </CardContent>
-            </Card>
+                <Card className="relative overflow-hidden border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-500 hover:scale-105 hover:shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <CardContent className="p-6 text-center relative z-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl mb-4 shadow-lg group-hover:shadow-primary/25 transition-shadow duration-500">
+                      <PlusCircle className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">Buat Sesi</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Tambahkan merchant GoFood favorit dan buat sesi pemesanan grup baru
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="text-center pb-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-xl mb-3 group-hover:bg-secondary/20 transition-colors">
-                  <Share2 className="w-6 h-6 text-secondary" />
+              {/* Step 2 */}
+              <div className="relative group">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                  2
                 </div>
-                <CardTitle className="text-lg">Bagikan Link</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center">
-                  Kirim link pemesanan ke grup WhatsApp Anda
-                </CardDescription>
-              </CardContent>
-            </Card>
+                <Card className="relative overflow-hidden border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-500 hover:scale-105 hover:shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <CardContent className="p-6 text-center relative z-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-secondary to-secondary/80 rounded-2xl mb-4 shadow-lg group-hover:shadow-secondary/25 transition-shadow duration-500">
+                      <Share2 className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">Bagikan Link</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Kirim link ke grup WhatsApp dan ajak teman untuk pesan bersama
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="text-center pb-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-success/10 rounded-xl mb-3 group-hover:bg-success/20 transition-colors">
-                  <ShoppingBag className="w-6 h-6 text-success" />
+              {/* Step 3 */}
+              <div className="relative group">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-success rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                  3
                 </div>
-                <CardTitle className="text-lg">Kumpulkan Order</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center">
-                  Lihat semua pesanan dan pesan langsung ke GoFood
-                </CardDescription>
-              </CardContent>
-            </Card>
+                <Card className="relative overflow-hidden border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-500 hover:scale-105 hover:shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <CardContent className="p-6 text-center relative z-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-success to-success/80 rounded-2xl mb-4 shadow-lg group-hover:shadow-success/25 transition-shadow duration-500">
+                      <ShoppingBag className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">Kumpulkan Order</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Lihat ringkasan semua pesanan dan pesan langsung ke GoFood
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
 
           {/* Create Session Form */}
