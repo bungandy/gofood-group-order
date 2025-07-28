@@ -21,35 +21,39 @@ interface MenuItem {
   image?: string;
   merchantId: string;
 }
-
 interface Merchant {
   id: string;
   name: string;
   link: string;
 }
-
 interface Order {
   id: string;
   customerName: string;
-  items: { menuItem: MenuItem; quantity: number }[];
+  items: {
+    menuItem: MenuItem;
+    quantity: number;
+  }[];
   notes?: string;
   total: number;
   timestamp: string;
 }
-
 const OrderingPage = () => {
-  const { sessionId } = useParams();
+  const {
+    sessionId
+  } = useParams();
   const navigate = useNavigate();
   const [merchantName, setMerchantName] = useState("Grup Order Session");
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [customerName, setCustomerName] = useState("");
-  const [cart, setCart] = useState<{ menuItem: MenuItem; quantity: number }[]>([]);
+  const [cart, setCart] = useState<{
+    menuItem: MenuItem;
+    quantity: number;
+  }[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [expandedMerchants, setExpandedMerchants] = useState<Set<string>>(new Set());
-
   const toggleMerchantExpansion = (merchantId: string) => {
     setExpandedMerchants(prev => {
       const newSet = new Set(prev);
@@ -61,7 +65,9 @@ const OrderingPage = () => {
       return newSet;
     });
   };
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Load session data and existing orders on component mount
   useEffect(() => {
@@ -74,16 +80,15 @@ const OrderingPage = () => {
         console.log('Parsed session data:', parsed);
         const sessionMerchants = parsed.merchants || [];
         console.log('Session merchants before ID assignment:', sessionMerchants);
-        
+
         // Add IDs to merchants if they don't have them
         const merchantsWithIds = sessionMerchants.map((merchant: any, index: number) => ({
           ...merchant,
           id: merchant.id || `merchant_${index + 1}`
         }));
-        
         console.log('Session merchants after ID assignment:', merchantsWithIds);
         setMerchants(merchantsWithIds);
-        
+
         // Set merchant name based on number of merchants
         if (merchantsWithIds.length === 1) {
           setMerchantName(merchantsWithIds[0].name);
@@ -92,16 +97,24 @@ const OrderingPage = () => {
         }
       } else {
         // If no session data, create mock merchants for development
-        const mockMerchants = [
-          { id: 'merchant_1', name: 'Warung Gudeg Bu Sari', link: 'https://gofood.co.id/warung-gudeg' },
-          { id: 'merchant_2', name: 'Ayam Geprek Bensu', link: 'https://gofood.co.id/ayam-geprek' },
-          { id: 'merchant_3', name: 'Bakso Solo Samrat', link: 'https://gofood.co.id/bakso-solo' }
-        ];
+        const mockMerchants = [{
+          id: 'merchant_1',
+          name: 'Warung Gudeg Bu Sari',
+          link: 'https://gofood.co.id/warung-gudeg'
+        }, {
+          id: 'merchant_2',
+          name: 'Ayam Geprek Bensu',
+          link: 'https://gofood.co.id/ayam-geprek'
+        }, {
+          id: 'merchant_3',
+          name: 'Bakso Solo Samrat',
+          link: 'https://gofood.co.id/bakso-solo'
+        }];
         setMerchants(mockMerchants);
         setMerchantName(`Grup Order - ${mockMerchants.length} Merchant`);
         console.log('Using mock merchants:', mockMerchants);
       }
-      
+
       // Load existing orders for this session
       const ordersData = localStorage.getItem(`orders_${sessionId}`);
       if (ordersData) {
@@ -113,167 +126,234 @@ const OrderingPage = () => {
   // Generate menu items based on merchants - in real app, this would come from API
   const getAllMenuItems = (): MenuItem[] => {
     const allItems: MenuItem[] = [];
-    
-    merchants.forEach((merchant) => {
+    merchants.forEach(merchant => {
       // Different menu items for each merchant
       let merchantMenus: MenuItem[] = [];
-      
-      if (merchant.id === 'merchant_1') { // Warung Gudeg Bu Sari
-        merchantMenus = [
-          { id: `${merchant.id}_1`, name: "Nasi Gudeg Komplit", price: 25000, description: "Nasi putih, gudeg, ayam, telur, tahu, tempe", merchantId: merchant.id },
-          { id: `${merchant.id}_2`, name: "Gudeg Ayam", price: 20000, description: "Gudeg dengan ayam kampung", merchantId: merchant.id },
-          { id: `${merchant.id}_3`, name: "Gudeg Telur", price: 15000, description: "Gudeg dengan telur puyuh", merchantId: merchant.id },
-          { id: `${merchant.id}_4`, name: "Sambal Krecek", price: 8000, description: "Sambal krecek khas Yogya", merchantId: merchant.id },
-          { id: `${merchant.id}_5`, name: "Es Teh Manis", price: 5000, description: "Minuman segar es teh manis", merchantId: merchant.id },
-          { id: `${merchant.id}_6`, name: "Es Jeruk", price: 8000, description: "Minuman segar es jeruk peras", merchantId: merchant.id },
-        ];
-      } else if (merchant.id === 'merchant_2') { // Ayam Geprek Bensu
-        merchantMenus = [
-          { id: `${merchant.id}_1`, name: "Ayam Geprek Original", price: 18000, description: "Ayam geprek dengan sambal level 1-5", merchantId: merchant.id },
-          { id: `${merchant.id}_2`, name: "Ayam Geprek Keju", price: 22000, description: "Ayam geprek dengan keju mozarella", merchantId: merchant.id },
-          { id: `${merchant.id}_3`, name: "Ayam Geprek Jumbo", price: 28000, description: "Ayam geprek porsi jumbo", merchantId: merchant.id },
-          { id: `${merchant.id}_4`, name: "Nasi Putih", price: 5000, description: "Nasi putih hangat", merchantId: merchant.id },
-          { id: `${merchant.id}_5`, name: "Es Teh", price: 3000, description: "Es teh manis segar", merchantId: merchant.id },
-          { id: `${merchant.id}_6`, name: "Es Jeruk", price: 5000, description: "Es jeruk segar", merchantId: merchant.id },
-        ];
-      } else if (merchant.id === 'merchant_3') { // Bakso Solo Samrat
-        merchantMenus = [
-          { id: `${merchant.id}_1`, name: "Bakso Solo Special", price: 20000, description: "Bakso daging sapi dengan mie dan pangsit", merchantId: merchant.id },
-          { id: `${merchant.id}_2`, name: "Bakso Urat", price: 18000, description: "Bakso urat kenyal dengan kuah gurih", merchantId: merchant.id },
-          { id: `${merchant.id}_3`, name: "Mie Ayam Bakso", price: 15000, description: "Mie ayam dengan bakso daging", merchantId: merchant.id },
-          { id: `${merchant.id}_4`, name: "Pangsit Goreng", price: 12000, description: "Pangsit goreng isi ayam", merchantId: merchant.id },
-          { id: `${merchant.id}_5`, name: "Es Campur", price: 8000, description: "Es campur segar", merchantId: merchant.id },
-          { id: `${merchant.id}_6`, name: "Es Kelapa Muda", price: 10000, description: "Es kelapa muda segar", merchantId: merchant.id },
-        ];
+      if (merchant.id === 'merchant_1') {
+        // Warung Gudeg Bu Sari
+        merchantMenus = [{
+          id: `${merchant.id}_1`,
+          name: "Nasi Gudeg Komplit",
+          price: 25000,
+          description: "Nasi putih, gudeg, ayam, telur, tahu, tempe",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_2`,
+          name: "Gudeg Ayam",
+          price: 20000,
+          description: "Gudeg dengan ayam kampung",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_3`,
+          name: "Gudeg Telur",
+          price: 15000,
+          description: "Gudeg dengan telur puyuh",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_4`,
+          name: "Sambal Krecek",
+          price: 8000,
+          description: "Sambal krecek khas Yogya",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_5`,
+          name: "Es Teh Manis",
+          price: 5000,
+          description: "Minuman segar es teh manis",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_6`,
+          name: "Es Jeruk",
+          price: 8000,
+          description: "Minuman segar es jeruk peras",
+          merchantId: merchant.id
+        }];
+      } else if (merchant.id === 'merchant_2') {
+        // Ayam Geprek Bensu
+        merchantMenus = [{
+          id: `${merchant.id}_1`,
+          name: "Ayam Geprek Original",
+          price: 18000,
+          description: "Ayam geprek dengan sambal level 1-5",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_2`,
+          name: "Ayam Geprek Keju",
+          price: 22000,
+          description: "Ayam geprek dengan keju mozarella",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_3`,
+          name: "Ayam Geprek Jumbo",
+          price: 28000,
+          description: "Ayam geprek porsi jumbo",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_4`,
+          name: "Nasi Putih",
+          price: 5000,
+          description: "Nasi putih hangat",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_5`,
+          name: "Es Teh",
+          price: 3000,
+          description: "Es teh manis segar",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_6`,
+          name: "Es Jeruk",
+          price: 5000,
+          description: "Es jeruk segar",
+          merchantId: merchant.id
+        }];
+      } else if (merchant.id === 'merchant_3') {
+        // Bakso Solo Samrat
+        merchantMenus = [{
+          id: `${merchant.id}_1`,
+          name: "Bakso Solo Special",
+          price: 20000,
+          description: "Bakso daging sapi dengan mie dan pangsit",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_2`,
+          name: "Bakso Urat",
+          price: 18000,
+          description: "Bakso urat kenyal dengan kuah gurih",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_3`,
+          name: "Mie Ayam Bakso",
+          price: 15000,
+          description: "Mie ayam dengan bakso daging",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_4`,
+          name: "Pangsit Goreng",
+          price: 12000,
+          description: "Pangsit goreng isi ayam",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_5`,
+          name: "Es Campur",
+          price: 8000,
+          description: "Es campur segar",
+          merchantId: merchant.id
+        }, {
+          id: `${merchant.id}_6`,
+          name: "Es Kelapa Muda",
+          price: 10000,
+          description: "Es kelapa muda segar",
+          merchantId: merchant.id
+        }];
       }
-      
       allItems.push(...merchantMenus);
     });
-    
     return allItems;
   };
-
   const menuItems = getAllMenuItems();
-
   const addToCart = (menuItem: MenuItem) => {
     setCart(prev => {
       const existing = prev.find(item => item.menuItem.id === menuItem.id);
       if (existing) {
-        return prev.map(item => 
-          item.menuItem.id === menuItem.id 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+        return prev.map(item => item.menuItem.id === menuItem.id ? {
+          ...item,
+          quantity: item.quantity + 1
+        } : item);
       }
-      return [...prev, { menuItem, quantity: 1 }];
+      return [...prev, {
+        menuItem,
+        quantity: 1
+      }];
     });
   };
-
   const removeFromCart = (menuItemId: string) => {
     setCart(prev => {
-      return prev.map(item => 
-        item.menuItem.id === menuItemId 
-          ? { ...item, quantity: Math.max(0, item.quantity - 1) }
-          : item
-      ).filter(item => item.quantity > 0);
+      return prev.map(item => item.menuItem.id === menuItemId ? {
+        ...item,
+        quantity: Math.max(0, item.quantity - 1)
+      } : item).filter(item => item.quantity > 0);
     });
   };
-
-  const cartTotal = cart.reduce((total, item) => total + (item.menuItem.price * item.quantity), 0);
-
+  const cartTotal = cart.reduce((total, item) => total + item.menuItem.price * item.quantity, 0);
   const submitOrder = () => {
     if (!customerName || cart.length === 0) {
       toast({
         title: "Pesanan tidak lengkap",
         description: "Silakan isi nama dan pilih minimal 1 menu",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     const newOrder: Order = {
       id: Math.random().toString(36).substring(2, 15),
       customerName,
       items: [...cart],
       notes,
       total: cartTotal,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
-
     const updatedOrders = [...orders, newOrder];
     setOrders(updatedOrders);
-    
+
     // Save orders to localStorage
     if (sessionId) {
       localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
     }
-    
     setCart([]);
     setCustomerName("");
     setNotes("");
     setEditingOrder(null);
-
     toast({
       title: editingOrder ? "Pesanan berhasil diperbarui!" : "Pesanan berhasil ditambahkan!",
-      description: `Pesanan atas nama ${customerName} telah ${editingOrder ? "diperbarui" : "disimpan"}`,
+      description: `Pesanan atas nama ${customerName} telah ${editingOrder ? "diperbarui" : "disimpan"}`
     });
   };
-
   const shareLink = () => {
     const currentUrl = window.location.href;
     navigator.clipboard.writeText(currentUrl).then(() => {
       setCopied(true);
       toast({
         title: "Link disalin!",
-        description: "Link sudah disalin ke clipboard",
+        description: "Link sudah disalin ke clipboard"
       });
       setTimeout(() => setCopied(false), 2000);
     });
   };
-
   const goToOverview = () => {
     navigate(`/order/${sessionId}/overview`);
   };
-
   const editOrder = (order: Order) => {
     setEditingOrder(order);
     setCustomerName(order.customerName);
     setCart(order.items);
     setNotes(order.notes || "");
-    
+
     // Remove the order being edited from the list
     const updatedOrders = orders.filter(o => o.id !== order.id);
     setOrders(updatedOrders);
-    
     if (sessionId) {
       localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
     }
-
     toast({
       title: "Pesanan dimuat untuk diedit",
-      description: `Pesanan ${order.customerName} telah dimuat ke form`,
+      description: `Pesanan ${order.customerName} telah dimuat ke form`
     });
   };
-
   const deleteOrder = (orderId: string) => {
     const orderToDelete = orders.find(o => o.id === orderId);
     const updatedOrders = orders.filter(o => o.id !== orderId);
     setOrders(updatedOrders);
-    
     if (sessionId) {
       localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
     }
-
     toast({
       title: "Pesanan dihapus",
-      description: `Pesanan ${orderToDelete?.customerName} telah dihapus`,
+      description: `Pesanan ${orderToDelete?.customerName} telah dihapus`
     });
   };
-
   const grandTotal = orders.reduce((total, order) => total + order.total, 0);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-6 md:mb-8">
@@ -282,22 +362,14 @@ const OrderingPage = () => {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Button 
-                onClick={shareLink}
-                variant="outline" 
-                className="bg-white/80 backdrop-blur-sm flex-1 sm:flex-initial text-sm"
-              >
-                {copied ? (
-                  <>
+              <Button onClick={shareLink} variant="outline" className="bg-white/80 backdrop-blur-sm flex-1 sm:flex-initial text-sm">
+                {copied ? <>
                     <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
                     Disalin!
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <Share2 className="w-4 h-4 mr-2" />
                     Bagikan Link
-                  </>
-                )}
+                  </>}
               </Button>
               
               <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap">
@@ -306,16 +378,10 @@ const OrderingPage = () => {
               </Badge>
             </div>
             
-            {orders.length > 0 && (
-              <Button 
-                onClick={goToOverview}
-                variant="outline"
-                className="bg-white/80 backdrop-blur-sm w-full sm:w-auto text-sm"
-              >
+            {orders.length > 0 && <Button onClick={goToOverview} variant="outline" className="bg-white/80 backdrop-blur-sm w-full sm:w-auto text-sm">
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Lihat Overview
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
 
@@ -324,28 +390,23 @@ const OrderingPage = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Chat Section - Temporarily disabled for next phase */}
             {/* 
-            <GroupChat 
+             <GroupChat 
               sessionId={sessionId || ""} 
               currentUserName={customerName}
               orders={orders}
-            />
-            */}
+             />
+             */}
             {/* Menu Section */}
-            {merchants.length === 0 ? (
-              <Card className="bg-white/80 backdrop-blur-sm">
+            {merchants.length === 0 ? <Card className="bg-white/80 backdrop-blur-sm">
                 <CardContent className="py-8">
                   <div className="text-center text-muted-foreground">
                     <p>Tidak ada merchant tersedia</p>
                   </div>
                 </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-6">
+              </Card> : <div className="space-y-6">
                 {merchants.map((merchant, index) => {
-                  const merchantMenus = menuItems.filter(item => item.merchantId === merchant.id);
-                  
-                  return (
-                    <Card key={merchant.id} className="bg-white/80 backdrop-blur-sm animate-fade-in">
+              const merchantMenus = menuItems.filter(item => item.merchantId === merchant.id);
+              return <Card key={merchant.id} className="bg-white/80 backdrop-blur-sm animate-fade-in">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-primary flex items-center gap-2">
                           <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
@@ -358,12 +419,10 @@ const OrderingPage = () => {
                       <CardContent>
                         <div className="relative">
                           <div className="grid gap-3">
-                            {merchantMenus.slice(0, expandedMerchants.has(merchant.id) ? merchantMenus.length : 4).map((item) => {
-                              const cartItem = cart.find(c => c.menuItem.id === item.id);
-                              const quantity = cartItem?.quantity || 0;
-                              
-                              return (
-                                <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover:shadow-sm">
+                            {merchantMenus.slice(0, expandedMerchants.has(merchant.id) ? merchantMenus.length : 4).map(item => {
+                        const cartItem = cart.find(c => c.menuItem.id === item.id);
+                        const quantity = cartItem?.quantity || 0;
+                        return <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover:shadow-sm">
                                   <div className="flex-1">
                                     <h4 className="font-medium">{item.name}</h4>
                                     <p className="text-sm text-muted-foreground">{item.description}</p>
@@ -373,66 +432,39 @@ const OrderingPage = () => {
                                   </div>
                                   
                                   <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => removeFromCart(item.id)}
-                                      disabled={quantity === 0}
-                                      className="hover-scale"
-                                    >
+                                    <Button variant="outline" size="sm" onClick={() => removeFromCart(item.id)} disabled={quantity === 0} className="hover-scale">
                                       <Minus className="w-4 h-4" />
                                     </Button>
                                     <span className="w-8 text-center font-medium">{quantity}</span>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => addToCart(item)}
-                                      className="hover-scale"
-                                    >
+                                    <Button variant="outline" size="sm" onClick={() => addToCart(item)} className="hover-scale">
                                       <Plus className="w-4 h-4" />
                                     </Button>
                                   </div>
-                                </div>
-                              );
-                            })}
+                                </div>;
+                      })}
                           </div>
                           
                           {/* Gradient fade effect and expand button */}
-                          {merchantMenus.length > 4 && !expandedMerchants.has(merchant.id) && (
-                            <div className="relative">
+                          {merchantMenus.length > 4 && !expandedMerchants.has(merchant.id) && <div className="relative">
                               <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
-                            </div>
-                          )}
+                            </div>}
                           
-                          {merchantMenus.length > 4 && (
-                            <div className="flex justify-center mt-4">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => toggleMerchantExpansion(merchant.id)}
-                                className="bg-white/80 backdrop-blur-sm hover-scale"
-                              >
-                                {expandedMerchants.has(merchant.id) ? (
-                                  <>
+                          {merchantMenus.length > 4 && <div className="flex justify-center mt-4">
+                              <Button variant="outline" size="sm" onClick={() => toggleMerchantExpansion(merchant.id)} className="bg-white/80 backdrop-blur-sm hover-scale">
+                                {expandedMerchants.has(merchant.id) ? <>
                                     <ChevronUp className="w-4 h-4 mr-1" />
                                     Tampilkan Lebih Sedikit
-                                  </>
-                                ) : (
-                                  <>
+                                  </> : <>
                                     <ChevronDown className="w-4 h-4 mr-1" />
                                     Tampilkan Semua ({merchantMenus.length - 4} lainnya)
-                                  </>
-                                )}
+                                  </>}
                               </Button>
-                            </div>
-                          )}
+                            </div>}
                         </div>
                       </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+                    </Card>;
+            })}
+              </div>}
           </div>
 
           {/* Order Form & Summary */}
@@ -454,115 +486,78 @@ const OrderingPage = () => {
                   </Alert>
                   
                   {/* Edit Notice */}
-                  {editingOrder && (
-                    <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+                  {editingOrder && <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
                       <Edit2 className="h-4 w-4 text-amber-600" />
                       <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium">
                         ⚠️ Anda sedang mengubah pesanan atas nama <strong>{editingOrder.customerName}</strong>
                       </AlertDescription>
-                    </Alert>
-                  )}
+                    </Alert>}
                 <div className="space-y-2">
                   <Label htmlFor="customer-name">Nama Pemesan</Label>
-                  <Input
-                    id="customer-name"
-                    placeholder="Masukkan nama Anda"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                  />
+                  <Input id="customer-name" placeholder="Masukkan nama Anda" value={customerName} onChange={e => setCustomerName(e.target.value)} />
                 </div>
 
-                 {cart.length > 0 && (
-                   <div className="space-y-2">
+                 {cart.length > 0 && <div className="space-y-2">
                      <Label>Item yang dipilih:</Label>
                      <div className="space-y-3">
                        {(() => {
-                         // Group cart items by merchant
-                         const groupedCart = cart.reduce((acc, item) => {
-                           const merchantId = item.menuItem.merchantId;
-                           if (!acc[merchantId]) {
-                             acc[merchantId] = [];
-                           }
-                           acc[merchantId].push(item);
-                           return acc;
-                         }, {} as Record<string, typeof cart>);
-
-                         return Object.entries(groupedCart).map(([merchantId, items]) => {
-                           const merchant = merchants.find(m => m.id === merchantId);
-                           const merchantTotal = items.reduce((total, item) => total + (item.menuItem.price * item.quantity), 0);
-                           
-                           return (
-                             <div key={merchantId} className="border rounded-lg p-3 bg-muted/30">
+                    // Group cart items by merchant
+                    const groupedCart = cart.reduce((acc, item) => {
+                      const merchantId = item.menuItem.merchantId;
+                      if (!acc[merchantId]) {
+                        acc[merchantId] = [];
+                      }
+                      acc[merchantId].push(item);
+                      return acc;
+                    }, {} as Record<string, typeof cart>);
+                    return Object.entries(groupedCart).map(([merchantId, items]) => {
+                      const merchant = merchants.find(m => m.id === merchantId);
+                      const merchantTotal = items.reduce((total, item) => total + item.menuItem.price * item.quantity, 0);
+                      return <div key={merchantId} className="border rounded-lg p-3 bg-muted/30">
                                <div className="font-medium text-sm text-primary mb-2 flex items-center gap-2">
                                  <div className="w-2 h-2 bg-primary rounded-full"></div>
                                  {merchant?.name || 'Unknown Merchant'}
                                </div>
                                <div className="space-y-1">
-                                 {items.map((item) => (
-                                   <div key={item.menuItem.id} className="flex justify-between text-sm">
+                                 {items.map(item => <div key={item.menuItem.id} className="flex justify-between text-sm">
                                      <span>{item.menuItem.name} x{item.quantity}</span>
                                      <span>Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
-                                   </div>
-                                 ))}
+                                   </div>)}
                                </div>
                                <div className="flex justify-between text-sm font-medium text-primary mt-2 pt-2 border-t border-primary/20">
                                  <span>Subtotal:</span>
                                  <span>Rp {merchantTotal.toLocaleString('id-ID')}</span>
                                </div>
-                             </div>
-                           );
-                         });
-                       })()}
+                             </div>;
+                    });
+                  })()}
                      </div>
                     <Separator />
                     <div className="flex justify-between font-semibold">
                       <span>Total:</span>
                       <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
                     </div>
-                  </div>
-                )}
+                  </div>}
 
                 <div className="space-y-2">
                   <Label htmlFor="notes">Catatan (opsional)</Label>
-                  <Input
-                    id="notes"
-                    placeholder="Contoh: level pedas, tanpa bawang, dll"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
+                  <Input id="notes" placeholder="Contoh: level pedas, tanpa bawang, dll" value={notes} onChange={e => setNotes(e.target.value)} />
                 </div>
 
-                <Button 
-                  onClick={submitOrder}
-                  className="w-full"
-                  disabled={!customerName || cart.length === 0}
-                >
+                <Button onClick={submitOrder} className="w-full" disabled={!customerName || cart.length === 0}>
                   {editingOrder ? "Perbarui Pesanan" : "Tambah ke Pesanan Grup"}
                 </Button>
               </CardContent>
             </Card>
 
             {/* Orders Summary */}
-            <OrderSummaryByMerchant
-              orders={orders}
-              merchants={merchants}
-              onEditOrder={editOrder}
-              onDeleteOrder={deleteOrder}
-              compact={true}
-            />
+            <OrderSummaryByMerchant orders={orders} merchants={merchants} onEditOrder={editOrder} onDeleteOrder={deleteOrder} compact={true} />
             
-            <Button 
-              className="w-full bg-gradient-to-r from-primary to-primary-hover"
-              size="lg"
-            >
-              Pesan ke GoFood
-            </Button>
+            
           </div>
         </div>
       </div>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default OrderingPage;
