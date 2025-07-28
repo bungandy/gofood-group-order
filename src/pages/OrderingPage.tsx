@@ -420,7 +420,15 @@ const OrderingPage = () => {
                   {orders.map((order) => (
                     <div key={order.id} className="p-3 border rounded-lg bg-muted/30">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="font-semibold">{order.customerName}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-semibold">{order.customerName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : 'Just now'}
+                          </div>
+                        </div>
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
@@ -439,12 +447,6 @@ const OrderingPage = () => {
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) : 'Just now'}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {order.items.map(item => 
