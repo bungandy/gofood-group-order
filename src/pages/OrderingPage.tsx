@@ -567,7 +567,7 @@ const OrderingPage = () => {
                      }, {} as Record<string, Order[]>);
 
                      return Object.entries(groupedOrders).map(([merchantName, merchantOrders]) => (
-                       <div key={merchantName} className="space-y-3">
+                       <div key={merchantName} className="space-y-2">
                          <div className="font-semibold text-primary flex items-center gap-2 border-b pb-2">
                            <div className="w-2 h-2 bg-primary rounded-full"></div>
                            {merchantName}
