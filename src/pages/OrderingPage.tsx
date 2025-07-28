@@ -267,39 +267,41 @@ const OrderingPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">{merchantName}</h1>
-          <p className="text-muted-foreground mb-4">Pesan menu favorit Anda!</p>
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">{merchantName}</h1>
+          <p className="text-muted-foreground mb-4 text-sm md:text-base">Pesan menu favorit Anda!</p>
           
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <Button 
-              onClick={shareLink}
-              variant="outline" 
-              className="bg-white/80 backdrop-blur-sm"
-            >
-              {copied ? (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                  Disalin!
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Bagikan Link
-                </>
-              )}
-            </Button>
-            
-            <Badge variant="secondary" className="text-sm">
-              <Users className="w-4 h-4 mr-1" />
-              {orders.length} pesanan
-            </Badge>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button 
+                onClick={shareLink}
+                variant="outline" 
+                className="bg-white/80 backdrop-blur-sm flex-1 sm:flex-initial text-sm"
+              >
+                {copied ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                    Disalin!
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Bagikan Link
+                  </>
+                )}
+              </Button>
+              
+              <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                {orders.length} pesanan
+              </Badge>
+            </div>
             
             {orders.length > 0 && (
               <Button 
                 onClick={goToOverview}
                 variant="outline"
-                className="bg-white/80 backdrop-blur-sm"
+                className="bg-white/80 backdrop-blur-sm w-full sm:w-auto text-sm"
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Lihat Overview
