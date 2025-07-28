@@ -17,6 +17,7 @@ import {
   CheckCircle,
   User
 } from "lucide-react";
+import { OrderSummaryByMerchant } from "@/components/OrderSummaryByMerchant";
 import { useToast } from "@/hooks/use-toast";
 
 interface MenuItem {
@@ -423,58 +424,11 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
             </CardContent>
           </Card>
 
-          {/* Individual Orders */}
-          <Card className="bg-white/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Pesanan Individual
-              </CardTitle>
-              <CardDescription>
-                Detail pesanan setiap anggota grup
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {orders.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Belum ada pesanan masuk
-                </p>
-              ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {orders.map((order) => (
-                    <div key={order.id} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-semibold">{order.customerName}</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID') : 'Just now'}
-                          </p>
-                        </div>
-                        <Badge>
-                          Rp {order.total.toLocaleString('id-ID')}
-                        </Badge>
-                      </div>
-                      
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        {order.items.map((item, idx) => (
-                          <div key={idx}>
-                            {item.menuItem.name} x{item.quantity}
-                          </div>
-                        ))}
-                        
-                        {order.notes && (
-                          <div className="italic mt-2 p-2 bg-muted/30 rounded">
-                            <MessageSquare className="w-3 h-3 inline mr-1" />
-                            {order.notes}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+           <OrderSummaryByMerchant
+             orders={orders}
+             merchants={merchants}
+             showDeliveryFee={true}
+           />
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3, Edit2, Trash2, StickyNote, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { OrderSummaryByMerchant } from "@/components/OrderSummaryByMerchant";
 // import { GroupChat } from "@/components/GroupChat"; // Temporarily disabled for next phase
 
 interface MenuItem {
@@ -531,120 +532,20 @@ const OrderingPage = () => {
             </Card>
 
             {/* Orders Summary */}
-            {orders.length > 0 && (
-              <Card className="bg-white/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle>Ringkasan Pesanan Grup</CardTitle>
-                  <CardDescription>{orders.length} pesanan terkumpul</CardDescription>
-                </CardHeader>
-                 <CardContent className="space-y-4">
-                   {(() => {
-                     // Group orders by merchant
-                     const groupedOrders = orders.reduce((acc, order) => {
-                       order.items.forEach(item => {
-                         const merchantId = item.menuItem.merchantId;
-                         const merchant = merchants.find(m => m.id === merchantId);
-                         const merchantName = merchant?.name || 'Unknown Merchant';
-                         
-                         if (!acc[merchantName]) {
-                           acc[merchantName] = [];
-                         }
-                         
-                         // Check if order already exists for this merchant
-                         let existingOrder = acc[merchantName].find(o => o.id === order.id);
-                         if (!existingOrder) {
-                           existingOrder = {
-                             ...order,
-                             items: []
-                           };
-                           acc[merchantName].push(existingOrder);
-                         }
-                         
-                         // Add item to the order
-                         existingOrder.items.push(item);
-                       });
-                       return acc;
-                     }, {} as Record<string, Order[]>);
-
-                     return Object.entries(groupedOrders).map(([merchantName, merchantOrders]) => (
-                       <div key={merchantName} className="space-y-2">
-                         <div className="font-medium text-primary flex items-center gap-2 border-b pb-1">
-                           <div className="w-2 h-2 bg-primary rounded-full"></div>
-                           {merchantName}
-                         </div>
-                         
-                         {merchantOrders.map((order) => (
-                           <div key={`${merchantName}_${order.id}`} className="p-2 border rounded bg-muted/20 ml-4">
-                             <div className="flex justify-between items-start mb-1">
-                               <div className="flex items-center gap-2">
-                                 <div className="text-sm font-medium">{order.customerName}</div>
-                                 <div className="text-xs text-muted-foreground">
-                                   {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID', {
-                                     hour: '2-digit',
-                                     minute: '2-digit'
-                                   }) : 'Just now'}
-                                 </div>
-                               </div>
-                               <div className="flex gap-1">
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => {
-                                     const originalOrder = orders.find(o => o.id === order.id);
-                                     if (originalOrder) editOrder(originalOrder);
-                                   }}
-                                   className="h-6 w-6 p-0 hover:bg-primary/10"
-                                 >
-                                   <Edit2 className="w-3 h-3" />
-                                 </Button>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => deleteOrder(order.id)}
-                                   className="h-6 w-6 p-0 hover:bg-destructive/10 text-destructive"
-                                 >
-                                   <Trash2 className="w-3 h-3" />
-                                 </Button>
-                               </div>
-                             </div>
-                             <div className="text-xs text-muted-foreground space-y-1">
-                               {order.items.map((item, idx) => (
-                                 <div key={idx} className="flex justify-between">
-                                   <span>{item.menuItem.name} ({item.quantity}x)</span>
-                                   <span>Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
-                                 </div>
-                               ))}
-                             </div>
-                             {order.notes && (
-                               <div className="text-xs text-muted-foreground italic flex items-center gap-1 mt-1">
-                                 <StickyNote className="w-3 h-3" />
-                                 {order.notes}
-                               </div>
-                             )}
-                             <div className="text-sm font-medium text-primary mt-1">
-                               Subtotal: Rp {order.items.reduce((total, item) => total + (item.menuItem.price * item.quantity), 0).toLocaleString('id-ID')}
-                             </div>
-                           </div>
-                         ))}
-                       </div>
-                     ));
-                   })()}
-                  
-                  <Separator />
-                  <div className="flex justify-between items-center font-bold text-lg">
-                    <span>Total Semua Pesanan:</span>
-                    <span className="text-primary">Rp {grandTotal.toLocaleString('id-ID')}</span>
-                  </div>
-                  
-                  <Button 
-                    className="w-full bg-gradient-to-r from-primary to-primary-hover"
-                    size="lg"
-                  >
-                    Pesan ke GoFood
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            <OrderSummaryByMerchant
+              orders={orders}
+              merchants={merchants}
+              onEditOrder={editOrder}
+              onDeleteOrder={deleteOrder}
+              compact={true}
+            />
+            
+            <Button 
+              className="w-full bg-gradient-to-r from-primary to-primary-hover"
+              size="lg"
+            >
+              Pesan ke GoFood
+            </Button>
           </div>
         </div>
       </div>
