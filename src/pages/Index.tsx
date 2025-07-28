@@ -81,7 +81,7 @@ const Index = () => {
               GoFood Group Order
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Buat halaman pemesanan grup untuk merchant GoFood favorit. Bagikan ke WhatsApp dan kumpulkan pesanan dengan mudah!
+              Bikin acara makan bareng jadi lebih seru! Kumpulkan pesanan GoFood dari semua teman dengan mudah dan efisien.
             </p>
           </div>
 
