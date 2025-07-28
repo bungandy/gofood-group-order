@@ -66,6 +66,7 @@ export class GofoodApiService {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.AUTH_TOKEN}`,
+          // 'Content-Type': 'application/json',
 
           // Device & App Info
           'PhoneMake': 'Apple',
@@ -84,10 +85,30 @@ export class GofoodApiService {
           'Gojek-Timezone': 'Asia/Jakarta',
           'Gojek-Service-Area': '1',
           'X-User-Locale': 'id_ID',
-
+          
           // Session & User
+          // 'X-UniqueId': '67588664-FBAA-44D4-9F14-6AFEA8FBEC34',
+          // 'X-Session-ID': '9C5D53C9-2FB7-4FCA-8448-71215A84D9BF',
           'customer_id': '99',
-
+          // 'X-User-Type': 'customer',
+          
+          // GoFood Specific
+          // 'gofood_intent_action_type': 'restaurant',
+          // 'gofood_search_id': 'ba436553-a954-40c3-afe7-399b53bffd9b',
+          
+          // Technical Headers
+          // 'X-Updater': '1',
+          // 'X-DeviceToken': '9E957A29D013576251F7A3179BBA46679AAD2B20BEDE297B083643BCB68212F0',
+          // 'X-PushTokenType': 'APN',
+          // 'AdjTs': 'false',
+          
+          // Security & Tracking
+          // 'X-E2': '52EC85EB4F94A6E7B70CC6FCDD4C',
+          // 'X-M1': '3:1428936008000-9653178,12:VKEY_DISABLED,13:1001,14:1753699092',
+          // 'X-E3': 'd41d8cd98f00b204e9800998ecf8427e',
+          // 'X-E1': '98332b1f7da819706ae3f1af8b779bf2ffdb81de42d2f9cb1337b4025f6b38b9:8b8cc29735520249200f4639b931317ddba06fd665822bd5ae547143753d69ad6b4c6a7937313569287d5e23010000001000ef1cc88456b9d843836d0100000055534b0d1f4132fad99275a776dcd58d:N:1753699092684',
+          // 'ads_campaign_id': 'da978ad1-0b1f-4ec9-9c4c-f12c4cf11bd7|L3ZQMHIYAXLL64K5XP7JEDIXQL3GRQND23RPBODT2TDLKZTWOAUWKHUMGAMO5OA45VJ4JQW225Z2UOQNYP7R6JPVKBUVQFMKCONXQSFW3R7ZGY7YID5R66NCAUEFUUOR2M======',
+          
           // Standard HTTP Headers
           'Accept': '*/*',
           'Accept-Encoding': 'br;q=1.0, gzip;q=0.9, deflate;q=0.8',
