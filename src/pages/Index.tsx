@@ -183,7 +183,7 @@ const Index = () => {
               <Button
                 variant="outline"
                 onClick={addMerchant}
-                className="w-full border-dashed hover:bg-primary/5"
+                className="w-full border-dashed border-primary/30 hover:border-primary hover:bg-primary/10 hover:scale-[1.02] transition-all duration-300 text-primary hover:text-primary"
               >
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Tambah Merchant
