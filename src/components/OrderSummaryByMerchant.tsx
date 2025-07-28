@@ -217,9 +217,23 @@ export const OrderSummaryByMerchant = ({
               )}
               
               <div className="flex justify-between items-center font-medium text-primary border-t pt-2">
-                <span>{showDeliveryFee && externalDeliveryFees ? 'Subtotal per merchant:' : showDeliveryFee ? 'Subtotal + Ongkir:' : 'Subtotal:'}</span>
-                <span>Rp {((merchantSubtotals[merchantName] || 0) + (showDeliveryFee && !externalDeliveryFees ? (merchantDeliveryFees[merchantName] || 0) : 0)).toLocaleString('id-ID')}</span>
+                <span>Subtotal {merchantName}:</span>
+                <span>Rp {(merchantSubtotals[merchantName] || 0).toLocaleString('id-ID')}</span>
               </div>
+              
+              {showDeliveryFee && externalDeliveryFees && (
+                <div className="flex justify-between items-center text-sm text-muted-foreground mt-1">
+                  <span>Ongkir per orang: Rp {getDeliveryFeePerPerson(merchantName).toLocaleString('id-ID')} x {groupedOrders[merchantName]?.length || 0} orang</span>
+                  <span>= Rp {(getDeliveryFeePerPerson(merchantName) * (groupedOrders[merchantName]?.length || 0)).toLocaleString('id-ID')}</span>
+                </div>
+              )}
+              
+              {showDeliveryFee && !externalDeliveryFees && (
+                <div className="flex justify-between items-center text-sm text-primary mt-1">
+                  <span>Total + Ongkir:</span>
+                  <span>Rp {((merchantSubtotals[merchantName] || 0) + (merchantDeliveryFees[merchantName] || 0)).toLocaleString('id-ID')}</span>
+                </div>
+              )}
             </div>
           </div>
         ))}
