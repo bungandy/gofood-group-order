@@ -50,6 +50,7 @@ const OrderOverview = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [sessionCreated, setSessionCreated] = useState<string>("");
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [merchantDeliveryFees, setMerchantDeliveryFees] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   // Load session data and orders
@@ -139,6 +140,9 @@ const OrderOverview = () => {
     }, 0);
     return acc;
   }, {} as Record<string, number>);
+  
+  // Calculate total delivery fees
+  const totalDeliveryFees = Object.values(merchantDeliveryFees).reduce((sum, fee) => sum + fee, 0);
 
   // Original grouped items for backward compatibility
   const groupedItems = orders.reduce((acc, order) => {
@@ -378,35 +382,42 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
                             </div>
                           </div>
                         ))}
-                        
-                        <div className="flex justify-between items-center font-medium text-primary border-t pt-2">
-                          <span>Subtotal {merchantName}:</span>
-                          <span>Rp {merchantSubtotals[merchantName]?.toLocaleString('id-ID')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <Separator />
-                  
-                  {/* Delivery Fee Input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="delivery-fee">Ongkos Pengiriman (Opsional)</Label>
-                    <Input
-                      id="delivery-fee"
-                      type="number"
-                      placeholder="Masukkan tarif ongkir (Rp)"
-                      value={deliveryFee || ''}
-                      onChange={(e) => setDeliveryFee(Number(e.target.value) || 0)}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between items-center font-bold text-lg">
-                    <span>Total Pesanan + Ongkir:</span>
-                    <span className="text-primary">
-                      Rp {(totalAmount + deliveryFee).toLocaleString('id-ID')}
-                    </span>
-                  </div>
+                         
+                         <div className="space-y-2">
+                           <Label htmlFor={`delivery-fee-${merchantName}`}>
+                             Ongkos Pengiriman {merchantName} (Opsional)
+                           </Label>
+                           <Input
+                             id={`delivery-fee-${merchantName}`}
+                             type="number"
+                             placeholder="Masukkan tarif ongkir (Rp)"
+                             value={merchantDeliveryFees[merchantName] || ''}
+                             onChange={(e) => {
+                               const fee = Number(e.target.value) || 0;
+                               setMerchantDeliveryFees(prev => ({
+                                 ...prev,
+                                 [merchantName]: fee
+                               }));
+                             }}
+                           />
+                         </div>
+                         
+                         <div className="flex justify-between items-center font-medium text-primary border-t pt-2">
+                           <span>Subtotal + Ongkir {merchantName}:</span>
+                           <span>Rp {((merchantSubtotals[merchantName] || 0) + (merchantDeliveryFees[merchantName] || 0)).toLocaleString('id-ID')}</span>
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                   
+                   <Separator />
+                   
+                   <div className="flex justify-between items-center font-bold text-lg">
+                     <span>Total Keseluruhan:</span>
+                     <span className="text-primary">
+                       Rp {(totalAmount + totalDeliveryFees).toLocaleString('id-ID')}
+                     </span>
+                   </div>
                 </div>
               )}
             </CardContent>
