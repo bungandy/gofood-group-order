@@ -131,9 +131,32 @@ export const useSupabaseSession = (sessionId?: string) => {
 
       if (merchantsError) throw merchantsError;
 
+      // Fetch merchant data from GoFood API for each merchant
+      for (const merchant of merchantData) {
+        try {
+          console.log(`Fetching data for merchant: ${merchant.merchant_id}`);
+          const { data, error } = await supabase.functions.invoke('gofood-proxy', {
+            body: {
+              gofoodUrl: merchant.link,
+              merchantId: merchant.merchant_id,
+              sessionId: sessionId
+            }
+          });
+
+          if (error) {
+            console.error(`Error fetching data for ${merchant.merchant_id}:`, error);
+          } else {
+            console.log(`Successfully fetched data for ${merchant.merchant_id}:`, data);
+          }
+        } catch (proxyError) {
+          console.error(`Proxy error for ${merchant.merchant_id}:`, proxyError);
+          // Continue with other merchants even if one fails
+        }
+      }
+
       toast({
         title: 'Sesi berhasil dibuat!',
-        description: 'Sesi pemesanan telah disimpan ke database',
+        description: 'Sesi pemesanan telah disimpan ke database dan data merchant berhasil diambil',
       });
 
       return sessionId;
