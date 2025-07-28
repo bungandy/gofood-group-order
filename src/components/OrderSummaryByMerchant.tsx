@@ -133,7 +133,7 @@ export const OrderSummaryByMerchant = ({
             <div key={merchantName} className="border border-primary/20 rounded-lg p-3 bg-muted/20">
               <div className="font-medium text-primary flex items-center justify-between border-b pb-1 mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  {totalMerchants > 1 && <div className="w-2 h-2 bg-primary rounded-full"></div>}
                   {merchantName}
                 </div>
                 {shouldShowCollapse && (
