@@ -360,7 +360,7 @@ const OrderingPage = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => toggleMerchantExpansion(merchant.id)}
-                                className="border-dashed border-primary/30 hover:border-primary hover:bg-primary/10 transition-all duration-200"
+                                className="bg-white/80 backdrop-blur-sm hover-scale"
                               >
                                 {expandedMerchants.has(merchant.id) ? (
                                   <>
