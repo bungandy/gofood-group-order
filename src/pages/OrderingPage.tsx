@@ -417,26 +417,47 @@ const OrderingPage = () => {
                   />
                 </div>
 
-                {cart.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Item yang dipilih:</Label>
-                    <div className="space-y-2">
-                       {cart.map((item) => {
-                         const merchant = merchants.find(m => m.id === item.menuItem.merchantId);
-                         return (
-                           <div key={item.menuItem.id} className="flex justify-between text-sm">
-                             <div className="flex-1">
-                               <span>{item.menuItem.name} x{item.quantity}</span>
-                               {merchant && (
-                                 <div className="text-xs text-muted-foreground">
-                                   dari {merchant.name}
-                                 </div>
-                               )}
+                 {cart.length > 0 && (
+                   <div className="space-y-2">
+                     <Label>Item yang dipilih:</Label>
+                     <div className="space-y-3">
+                       {(() => {
+                         // Group cart items by merchant
+                         const groupedCart = cart.reduce((acc, item) => {
+                           const merchantId = item.menuItem.merchantId;
+                           if (!acc[merchantId]) {
+                             acc[merchantId] = [];
+                           }
+                           acc[merchantId].push(item);
+                           return acc;
+                         }, {} as Record<string, typeof cart>);
+
+                         return Object.entries(groupedCart).map(([merchantId, items]) => {
+                           const merchant = merchants.find(m => m.id === merchantId);
+                           const merchantTotal = items.reduce((total, item) => total + (item.menuItem.price * item.quantity), 0);
+                           
+                           return (
+                             <div key={merchantId} className="border rounded-lg p-3 bg-muted/30">
+                               <div className="font-medium text-sm text-primary mb-2 flex items-center gap-2">
+                                 <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                 {merchant?.name || 'Unknown Merchant'}
+                               </div>
+                               <div className="space-y-1">
+                                 {items.map((item) => (
+                                   <div key={item.menuItem.id} className="flex justify-between text-sm">
+                                     <span>{item.menuItem.name} x{item.quantity}</span>
+                                     <span>Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
+                                   </div>
+                                 ))}
+                               </div>
+                               <div className="flex justify-between text-sm font-medium text-primary mt-2 pt-2 border-t border-primary/20">
+                                 <span>Subtotal {merchant?.name}:</span>
+                                 <span>Rp {merchantTotal.toLocaleString('id-ID')}</span>
+                               </div>
                              </div>
-                             <span>Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
-                           </div>
-                         );
-                       })}
+                           );
+                         });
+                       })()}
                      </div>
                     <Separator />
                     <div className="flex justify-between font-semibold">
