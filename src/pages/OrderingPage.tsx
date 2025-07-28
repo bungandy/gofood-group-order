@@ -405,9 +405,11 @@ const OrderingPage = () => {
               return <Card key={merchant.id} className="bg-white/80 backdrop-blur-sm animate-fade-in">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-primary flex items-center gap-2">
-                          <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
-                            {index + 1}
-                          </div>
+                          {merchants.length > 1 && (
+                            <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
+                              {index + 1}
+                            </div>
+                          )}
                           {merchant.name}
                         </CardTitle>
                         <CardDescription>{merchantMenus.length} menu tersedia</CardDescription>
