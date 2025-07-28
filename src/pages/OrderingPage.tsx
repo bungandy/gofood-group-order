@@ -378,10 +378,6 @@ const OrderingPage = () => {
               </Badge>
             </div>
             
-            {orders.length > 0 && <Button onClick={goToOverview} variant="outline" className="bg-white/80 backdrop-blur-sm w-full sm:w-auto text-sm">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Lihat Overview
-              </Button>}
           </div>
         </div>
 
@@ -553,6 +549,15 @@ const OrderingPage = () => {
             {/* Orders Summary */}
             <OrderSummaryByMerchant orders={orders} merchants={merchants} onEditOrder={editOrder} onDeleteOrder={deleteOrder} compact={true} />
             
+            {/* Overview Button */}
+            {orders.length > 0 && <Card className="bg-white/80 backdrop-blur-sm">
+                <CardContent className="py-4">
+                  <Button onClick={goToOverview} variant="outline" className="w-full text-sm">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Lihat Overview Lengkap
+                  </Button>
+                </CardContent>
+              </Card>}
             
           </div>
         </div>
