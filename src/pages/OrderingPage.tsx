@@ -104,16 +104,39 @@ const OrderingPage = () => {
   const getAllMenuItems = (): MenuItem[] => {
     const allItems: MenuItem[] = [];
     
-    merchants.forEach((merchant, index) => {
-      // Mock menu items for each merchant
-      const merchantMenus = [
-        { id: `${merchant.id}_1`, name: "Nasi Gudeg Komplit", price: 25000, description: "Nasi putih, gudeg, ayam, telur, tahu, tempe", merchantId: merchant.id },
-        { id: `${merchant.id}_2`, name: "Nasi Pecel", price: 15000, description: "Nasi putih dengan sayuran dan bumbu pecel", merchantId: merchant.id },
-        { id: `${merchant.id}_3`, name: "Soto Ayam", price: 20000, description: "Soto ayam dengan nasi putih", merchantId: merchant.id },
-        { id: `${merchant.id}_4`, name: "Gado-gado", price: 18000, description: "Sayuran segar dengan bumbu kacang", merchantId: merchant.id },
-        { id: `${merchant.id}_5`, name: "Es Teh Manis", price: 5000, description: "Minuman segar es teh manis", merchantId: merchant.id },
-        { id: `${merchant.id}_6`, name: "Es Jeruk", price: 8000, description: "Minuman segar es jeruk peras", merchantId: merchant.id },
-      ];
+    merchants.forEach((merchant) => {
+      // Different menu items for each merchant
+      let merchantMenus: MenuItem[] = [];
+      
+      if (merchant.id === 'merchant_1') { // Warung Gudeg Bu Sari
+        merchantMenus = [
+          { id: `${merchant.id}_1`, name: "Nasi Gudeg Komplit", price: 25000, description: "Nasi putih, gudeg, ayam, telur, tahu, tempe", merchantId: merchant.id },
+          { id: `${merchant.id}_2`, name: "Gudeg Ayam", price: 20000, description: "Gudeg dengan ayam kampung", merchantId: merchant.id },
+          { id: `${merchant.id}_3`, name: "Gudeg Telur", price: 15000, description: "Gudeg dengan telur puyuh", merchantId: merchant.id },
+          { id: `${merchant.id}_4`, name: "Sambal Krecek", price: 8000, description: "Sambal krecek khas Yogya", merchantId: merchant.id },
+          { id: `${merchant.id}_5`, name: "Es Teh Manis", price: 5000, description: "Minuman segar es teh manis", merchantId: merchant.id },
+          { id: `${merchant.id}_6`, name: "Es Jeruk", price: 8000, description: "Minuman segar es jeruk peras", merchantId: merchant.id },
+        ];
+      } else if (merchant.id === 'merchant_2') { // Ayam Geprek Bensu
+        merchantMenus = [
+          { id: `${merchant.id}_1`, name: "Ayam Geprek Original", price: 18000, description: "Ayam geprek dengan sambal level 1-5", merchantId: merchant.id },
+          { id: `${merchant.id}_2`, name: "Ayam Geprek Keju", price: 22000, description: "Ayam geprek dengan keju mozarella", merchantId: merchant.id },
+          { id: `${merchant.id}_3`, name: "Ayam Geprek Jumbo", price: 28000, description: "Ayam geprek porsi jumbo", merchantId: merchant.id },
+          { id: `${merchant.id}_4`, name: "Nasi Putih", price: 5000, description: "Nasi putih hangat", merchantId: merchant.id },
+          { id: `${merchant.id}_5`, name: "Es Teh", price: 3000, description: "Es teh manis segar", merchantId: merchant.id },
+          { id: `${merchant.id}_6`, name: "Es Jeruk", price: 5000, description: "Es jeruk segar", merchantId: merchant.id },
+        ];
+      } else if (merchant.id === 'merchant_3') { // Bakso Solo Samrat
+        merchantMenus = [
+          { id: `${merchant.id}_1`, name: "Bakso Solo Special", price: 20000, description: "Bakso daging sapi dengan mie dan pangsit", merchantId: merchant.id },
+          { id: `${merchant.id}_2`, name: "Bakso Urat", price: 18000, description: "Bakso urat kenyal dengan kuah gurih", merchantId: merchant.id },
+          { id: `${merchant.id}_3`, name: "Mie Ayam Bakso", price: 15000, description: "Mie ayam dengan bakso daging", merchantId: merchant.id },
+          { id: `${merchant.id}_4`, name: "Pangsit Goreng", price: 12000, description: "Pangsit goreng isi ayam", merchantId: merchant.id },
+          { id: `${merchant.id}_5`, name: "Es Campur", price: 8000, description: "Es campur segar", merchantId: merchant.id },
+          { id: `${merchant.id}_6`, name: "Es Kelapa Muda", price: 10000, description: "Es kelapa muda segar", merchantId: merchant.id },
+        ];
+      }
+      
       allItems.push(...merchantMenus);
     });
     
