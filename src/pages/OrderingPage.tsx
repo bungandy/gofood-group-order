@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle } from "lucide-react";
+import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MenuItem {
@@ -23,10 +23,12 @@ interface Order {
   items: { menuItem: MenuItem; quantity: number }[];
   notes?: string;
   total: number;
+  timestamp: string;
 }
 
 const OrderingPage = () => {
   const { sessionId } = useParams();
+  const navigate = useNavigate();
   const [merchantName, setMerchantName] = useState("Warteg Bahari");
   const [customerName, setCustomerName] = useState("");
   const [cart, setCart] = useState<{ menuItem: MenuItem; quantity: number }[]>([]);
@@ -35,13 +37,20 @@ const OrderingPage = () => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
-  // Load session data on component mount
+  // Load session data and existing orders on component mount
   useEffect(() => {
     if (sessionId) {
+      // Load session data
       const sessionData = localStorage.getItem(`session_${sessionId}`);
       if (sessionData) {
         const { merchantName: name } = JSON.parse(sessionData);
         setMerchantName(name);
+      }
+      
+      // Load existing orders for this session
+      const ordersData = localStorage.getItem(`orders_${sessionId}`);
+      if (ordersData) {
+        setOrders(JSON.parse(ordersData));
       }
     }
   }, [sessionId]);
@@ -98,9 +107,17 @@ const OrderingPage = () => {
       items: [...cart],
       notes,
       total: cartTotal,
+      timestamp: new Date().toISOString(),
     };
 
-    setOrders(prev => [...prev, newOrder]);
+    const updatedOrders = [...orders, newOrder];
+    setOrders(updatedOrders);
+    
+    // Save orders to localStorage
+    if (sessionId) {
+      localStorage.setItem(`orders_${sessionId}`, JSON.stringify(updatedOrders));
+    }
+    
     setCart([]);
     setCustomerName("");
     setNotes("");
@@ -121,6 +138,10 @@ const OrderingPage = () => {
       });
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const goToOverview = () => {
+    navigate(`/order/${sessionId}/overview`);
   };
 
   const grandTotal = orders.reduce((total, order) => total + order.total, 0);
@@ -156,6 +177,17 @@ const OrderingPage = () => {
               <Users className="w-4 h-4 mr-1" />
               {orders.length} pesanan
             </Badge>
+            
+            {orders.length > 0 && (
+              <Button 
+                onClick={goToOverview}
+                variant="outline"
+                className="bg-white/80 backdrop-blur-sm"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Lihat Overview
+              </Button>
+            )}
           </div>
         </div>
 
@@ -280,6 +312,12 @@ const OrderingPage = () => {
                   {orders.map((order) => (
                     <div key={order.id} className="p-3 border rounded-lg bg-muted/30">
                       <div className="font-semibold">{order.customerName}</div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : 'Just now'}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {order.items.map(item => 
                           `${item.menuItem.name} (${item.quantity}x)`

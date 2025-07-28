@@ -1,0 +1,367 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { 
+  ArrowLeft, 
+  Users, 
+  ShoppingCart, 
+  DollarSign, 
+  Download, 
+  MessageSquare,
+  Clock,
+  CheckCircle
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface MenuItem {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}
+
+interface Order {
+  id: string;
+  customerName: string;
+  items: { menuItem: MenuItem; quantity: number }[];
+  notes?: string;
+  total: number;
+  timestamp: string;
+}
+
+const OrderOverview = () => {
+  const { sessionId } = useParams();
+  const navigate = useNavigate();
+  const [merchantName, setMerchantName] = useState("Warteg Bahari");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [sessionCreated, setSessionCreated] = useState<string>("");
+  const { toast } = useToast();
+
+  // Load session data and orders
+  useEffect(() => {
+    if (sessionId) {
+      // Load session info
+      const sessionData = localStorage.getItem(`session_${sessionId}`);
+      if (sessionData) {
+        const { merchantName: name, createdAt } = JSON.parse(sessionData);
+        setMerchantName(name);
+        setSessionCreated(createdAt);
+      }
+
+      // Load orders for this session
+      const ordersData = localStorage.getItem(`orders_${sessionId}`);
+      if (ordersData) {
+        setOrders(JSON.parse(ordersData));
+      }
+    }
+  }, [sessionId]);
+
+  // Calculate summary statistics
+  const totalOrders = orders.length;
+  const totalAmount = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalItems = orders.reduce((sum, order) => 
+    sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
+  );
+
+  // Group items for easy ordering
+  const groupedItems = orders.reduce((acc, order) => {
+    order.items.forEach(({ menuItem, quantity }) => {
+      if (acc[menuItem.id]) {
+        acc[menuItem.id].quantity += quantity;
+        acc[menuItem.id].customers.push({
+          name: order.customerName,
+          quantity,
+          notes: order.notes
+        });
+      } else {
+        acc[menuItem.id] = {
+          menuItem,
+          quantity,
+          customers: [{
+            name: order.customerName,
+            quantity,
+            notes: order.notes
+          }]
+        };
+      }
+    });
+    return acc;
+  }, {} as Record<string, {
+    menuItem: MenuItem;
+    quantity: number;
+    customers: { name: string; quantity: number; notes?: string }[];
+  }>);
+
+  const exportOrderSummary = () => {
+    const summary = Object.values(groupedItems)
+      .map(({ menuItem, quantity, customers }) => {
+        const customerList = customers
+          .map(c => `${c.name} (${c.quantity}x)${c.notes ? ` - ${c.notes}` : ''}`)
+          .join(', ');
+        return `${menuItem.name}: ${quantity}x - Rp ${(menuItem.price * quantity).toLocaleString('id-ID')}\nPemesan: ${customerList}`;
+      })
+      .join('\n\n');
+
+    const fullSummary = `
+RINGKASAN PESANAN GRUP
+Merchant: ${merchantName}
+Total Pesanan: ${totalOrders}
+Total Item: ${totalItems}
+Total Harga: Rp ${totalAmount.toLocaleString('id-ID')}
+
+DETAIL PESANAN:
+${summary}
+
+PESANAN INDIVIDUAL:
+${orders.map(order => `
+${order.customerName}:
+${order.items.map(item => `- ${item.menuItem.name} ${item.quantity}x`).join('\n')}
+${order.notes ? `Catatan: ${order.notes}` : ''}
+Total: Rp ${order.total.toLocaleString('id-ID')}
+`).join('\n')}
+    `.trim();
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(fullSummary).then(() => {
+      toast({
+        title: "Ringkasan disalin!",
+        description: "Ringkasan pesanan sudah disalin ke clipboard",
+      });
+    });
+  };
+
+  const goBackToOrdering = () => {
+    navigate(`/order/${sessionId}`);
+  };
+
+  const finalizeOrder = () => {
+    toast({
+      title: "Pesanan siap dikirim!",
+      description: "Silakan copy ringkasan dan pesan ke GoFood",
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={goBackToOrdering}
+              className="bg-white/80 backdrop-blur-sm"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Kembali
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">{merchantName}</h1>
+              <p className="text-muted-foreground">Overview Pesanan Grup</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button 
+              onClick={exportOrderSummary}
+              variant="outline"
+              className="bg-white/80 backdrop-blur-sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+            <Button 
+              onClick={finalizeOrder}
+              className="bg-gradient-to-r from-primary to-primary-hover"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Finalisasi
+            </Button>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Pesanan</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{totalOrders}</div>
+              <p className="text-xs text-muted-foreground">
+                pesanan terkumpul
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Item</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-secondary">{totalItems}</div>
+              <p className="text-xs text-muted-foreground">
+                item dipesan
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Harga</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-success">
+                Rp {totalAmount.toLocaleString('id-ID')}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                total pembayaran
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Waktu Dibuat</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">
+                {sessionCreated ? new Date(sessionCreated).toLocaleTimeString('id-ID', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : '--:--'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {sessionCreated ? new Date(sessionCreated).toLocaleDateString('id-ID') : 'Unknown'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Grouped Items for GoFood Order */}
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5" />
+                Ringkasan untuk GoFood
+              </CardTitle>
+              <CardDescription>
+                Item yang perlu dipesan ke merchant
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(groupedItems).length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Belum ada pesanan masuk
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {Object.values(groupedItems).map(({ menuItem, quantity, customers }) => (
+                    <div key={menuItem.id} className="p-4 border rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-semibold">{menuItem.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {quantity}x @ Rp {menuItem.price.toLocaleString('id-ID')}
+                          </p>
+                        </div>
+                        <Badge variant="secondary">
+                          Rp {(menuItem.price * quantity).toLocaleString('id-ID')}
+                        </Badge>
+                      </div>
+                      
+                      <div className="text-xs text-muted-foreground">
+                        <strong>Pemesan:</strong>
+                        <div className="mt-1 space-y-1">
+                          {customers.map((customer, idx) => (
+                            <div key={idx} className="flex justify-between">
+                              <span>{customer.name} ({customer.quantity}x)</span>
+                              {customer.notes && (
+                                <span className="italic">"{customer.notes}"</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <Separator />
+                  <div className="flex justify-between items-center font-bold text-lg">
+                    <span>Total Pesanan GoFood:</span>
+                    <span className="text-primary">
+                      Rp {totalAmount.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Individual Orders */}
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Pesanan Individual
+              </CardTitle>
+              <CardDescription>
+                Detail pesanan setiap anggota grup
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {orders.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Belum ada pesanan masuk
+                </p>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {orders.map((order) => (
+                    <div key={order.id} className="p-4 border rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-semibold">{order.customerName}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID') : 'Just now'}
+                          </p>
+                        </div>
+                        <Badge>
+                          Rp {order.total.toLocaleString('id-ID')}
+                        </Badge>
+                      </div>
+                      
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {order.items.map((item, idx) => (
+                          <div key={idx}>
+                            {item.menuItem.name} x{item.quantity}
+                          </div>
+                        ))}
+                        
+                        {order.notes && (
+                          <div className="italic mt-2 p-2 bg-muted/30 rounded">
+                            <MessageSquare className="w-3 h-3 inline mr-1" />
+                            {order.notes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderOverview;
