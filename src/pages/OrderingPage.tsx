@@ -421,13 +421,23 @@ const OrderingPage = () => {
                   <div className="space-y-2">
                     <Label>Item yang dipilih:</Label>
                     <div className="space-y-2">
-                      {cart.map((item) => (
-                        <div key={item.menuItem.id} className="flex justify-between text-sm">
-                          <span>{item.menuItem.name} x{item.quantity}</span>
-                          <span>Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
-                        </div>
-                      ))}
-                    </div>
+                       {cart.map((item) => {
+                         const merchant = merchants.find(m => m.id === item.menuItem.merchantId);
+                         return (
+                           <div key={item.menuItem.id} className="flex justify-between text-sm">
+                             <div className="flex-1">
+                               <span>{item.menuItem.name} x{item.quantity}</span>
+                               {merchant && (
+                                 <div className="text-xs text-muted-foreground">
+                                   dari {merchant.name}
+                                 </div>
+                               )}
+                             </div>
+                             <span>Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
+                           </div>
+                         );
+                       })}
+                     </div>
                     <Separator />
                     <div className="flex justify-between font-semibold">
                       <span>Total:</span>
@@ -495,11 +505,23 @@ const OrderingPage = () => {
                           </Button>
                         </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {order.items.map(item => 
-                          `${item.menuItem.name} (${item.quantity}x)`
-                        ).join(', ')}
-                      </div>
+                       <div className="text-sm text-muted-foreground space-y-1">
+                         {order.items.map((item, idx) => {
+                           const merchant = merchants.find(m => m.id === item.menuItem.merchantId);
+                           return (
+                             <div key={idx} className="flex justify-between items-center">
+                               <div>
+                                 <span>{item.menuItem.name} ({item.quantity}x)</span>
+                                 {merchant && (
+                                   <span className="text-xs ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                                     {merchant.name}
+                                   </span>
+                                 )}
+                               </div>
+                             </div>
+                           );
+                         })}
+                       </div>
                       {order.notes && (
                         <div className="text-sm text-muted-foreground italic flex items-center gap-1">
                           <StickyNote className="w-3 h-3" />
