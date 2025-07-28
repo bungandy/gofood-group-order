@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Share2, ShoppingCart, Users, Copy, CheckCircle, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { GroupChat } from "@/components/GroupChat";
 
 interface MenuItem {
   id: string;
@@ -193,7 +194,13 @@ const OrderingPage = () => {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Menu Section */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">{/* Chat Section */}
+            <GroupChat 
+              sessionId={sessionId || ""} 
+              currentUserName={customerName}
+              orders={orders}
+            />
+            {/* Menu Section */}
             <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Menu Tersedia</CardTitle>
