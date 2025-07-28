@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -294,8 +295,17 @@ const OrderingPage = () => {
                   <ShoppingCart className="w-5 h-5" />
                   Pesanan Anda
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+               </CardHeader>
+               <CardContent className="space-y-4">
+                 {/* Edit Notice */}
+                 {editingOrder && (
+                   <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+                     <Edit2 className="h-4 w-4 text-amber-600" />
+                     <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium">
+                       ⚠️ Anda sedang mengubah pesanan atas nama <strong>{editingOrder.customerName}</strong>
+                     </AlertDescription>
+                   </Alert>
+                 )}
                 <div className="space-y-2">
                   <Label htmlFor="customer-name">Nama Pemesan</Label>
                   <Input
