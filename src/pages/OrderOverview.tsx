@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   ArrowLeft, 
   Users, 
@@ -22,6 +24,13 @@ interface MenuItem {
   name: string;
   price: number;
   description?: string;
+  merchantId: string;
+}
+
+interface Merchant {
+  id: string;
+  name: string;
+  link: string;
 }
 
 interface Order {
@@ -37,8 +46,10 @@ const OrderOverview = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const [merchantName, setMerchantName] = useState("Warteg Bahari");
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [sessionCreated, setSessionCreated] = useState<string>("");
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const { toast } = useToast();
 
   // Load session data and orders
@@ -47,9 +58,26 @@ const OrderOverview = () => {
       // Load session info
       const sessionData = localStorage.getItem(`session_${sessionId}`);
       if (sessionData) {
-        const { merchantName: name, createdAt } = JSON.parse(sessionData);
-        setMerchantName(name);
-        setSessionCreated(createdAt);
+        const parsed = JSON.parse(sessionData);
+        const sessionMerchants = parsed.merchants || [];
+        setMerchants(sessionMerchants);
+        
+        if (sessionMerchants.length === 1) {
+          setMerchantName(sessionMerchants[0].name);
+        } else if (sessionMerchants.length > 1) {
+          setMerchantName(`Grup Order - ${sessionMerchants.length} Merchant`);
+        }
+        
+        setSessionCreated(parsed.createdAt);
+      } else {
+        // Mock merchants for development
+        const mockMerchants = [
+          { id: 'merchant_1', name: 'Warung Gudeg Bu Sari', link: 'https://gofood.co.id/warung-gudeg' },
+          { id: 'merchant_2', name: 'Ayam Geprek Bensu', link: 'https://gofood.co.id/ayam-geprek' },
+          { id: 'merchant_3', name: 'Bakso Solo Samrat', link: 'https://gofood.co.id/bakso-solo' }
+        ];
+        setMerchants(mockMerchants);
+        setMerchantName(`Grup Order - ${mockMerchants.length} Merchant`);
       }
 
       // Load orders for this session
@@ -67,7 +95,52 @@ const OrderOverview = () => {
     sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
   );
 
-  // Group items for easy ordering
+  // Group items by merchant and menu item
+  const groupedItemsByMerchant = orders.reduce((acc, order) => {
+    order.items.forEach(({ menuItem, quantity }) => {
+      const merchantId = menuItem.merchantId;
+      const merchant = merchants.find(m => m.id === merchantId);
+      const merchantName = merchant?.name || 'Unknown Merchant';
+      
+      if (!acc[merchantName]) {
+        acc[merchantName] = {};
+      }
+      
+      if (acc[merchantName][menuItem.id]) {
+        acc[merchantName][menuItem.id].quantity += quantity;
+        acc[merchantName][menuItem.id].customers.push({
+          name: order.customerName,
+          quantity,
+          notes: order.notes
+        });
+      } else {
+        acc[merchantName][menuItem.id] = {
+          menuItem,
+          quantity,
+          customers: [{
+            name: order.customerName,
+            quantity,
+            notes: order.notes
+          }]
+        };
+      }
+    });
+    return acc;
+  }, {} as Record<string, Record<string, {
+    menuItem: MenuItem;
+    quantity: number;
+    customers: { name: string; quantity: number; notes?: string }[];
+  }>>);
+
+  // Calculate subtotal for each merchant
+  const merchantSubtotals = Object.entries(groupedItemsByMerchant).reduce((acc, [merchantName, items]) => {
+    acc[merchantName] = Object.values(items).reduce((total, { menuItem, quantity }) => {
+      return total + (menuItem.price * quantity);
+    }, 0);
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Original grouped items for backward compatibility
   const groupedItems = orders.reduce((acc, order) => {
     order.items.forEach(({ menuItem, quantity }) => {
       if (acc[menuItem.id]) {
@@ -259,50 +332,79 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {Object.keys(groupedItems).length === 0 ? (
+              {Object.keys(groupedItemsByMerchant).length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
                   Belum ada pesanan masuk
                 </p>
               ) : (
-                <div className="space-y-4">
-                  {Object.values(groupedItems).map(({ menuItem, quantity, customers }) => (
-                    <div key={menuItem.id} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-semibold">{menuItem.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {quantity}x @ Rp {menuItem.price.toLocaleString('id-ID')}
-                          </p>
-                        </div>
-                        <Badge variant="secondary">
-                          Rp {(menuItem.price * quantity).toLocaleString('id-ID')}
-                        </Badge>
+                <div className="space-y-6">
+                  {Object.entries(groupedItemsByMerchant).map(([merchantName, items]) => (
+                    <div key={merchantName} className="border rounded-lg p-4 bg-muted/20">
+                      <div className="font-semibold text-primary flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        {merchantName}
                       </div>
                       
-                      <div className="text-xs text-muted-foreground">
-                        <strong>Pemesan:</strong>
-                        <div className="mt-1 space-y-1">
-                          {customers.map((customer, idx) => (
-                            <div key={idx} className="flex justify-between">
-                              <span className="flex items-center gap-1">
-                                <User className="w-3 h-3" />
-                                {customer.name} ({customer.quantity}x)
-                              </span>
-                              {customer.notes && (
-                                <span className="italic">"{customer.notes}"</span>
-                              )}
+                      <div className="space-y-3 ml-4">
+                        {Object.values(items).map(({ menuItem, quantity, customers }) => (
+                          <div key={menuItem.id} className="p-3 border rounded-lg bg-white/50">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h3 className="font-medium">{menuItem.name}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {quantity}x @ Rp {menuItem.price.toLocaleString('id-ID')}
+                                </p>
+                              </div>
+                              <Badge variant="secondary">
+                                Rp {(menuItem.price * quantity).toLocaleString('id-ID')}
+                              </Badge>
                             </div>
-                          ))}
+                            
+                            <div className="text-xs text-muted-foreground">
+                              <strong>Pemesan:</strong>
+                              <div className="mt-1 space-y-1">
+                                {customers.map((customer, idx) => (
+                                  <div key={idx} className="flex justify-between">
+                                    <span className="flex items-center gap-1">
+                                      <User className="w-3 h-3" />
+                                      {customer.name} ({customer.quantity}x)
+                                    </span>
+                                    {customer.notes && (
+                                      <span className="italic">"{customer.notes}"</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        <div className="flex justify-between items-center font-medium text-primary border-t pt-2">
+                          <span>Subtotal {merchantName}:</span>
+                          <span>Rp {merchantSubtotals[merchantName]?.toLocaleString('id-ID')}</span>
                         </div>
                       </div>
                     </div>
                   ))}
                   
                   <Separator />
+                  
+                  {/* Delivery Fee Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="delivery-fee">Ongkos Pengiriman (Opsional)</Label>
+                    <Input
+                      id="delivery-fee"
+                      type="number"
+                      placeholder="Masukkan tarif ongkir (Rp)"
+                      value={deliveryFee || ''}
+                      onChange={(e) => setDeliveryFee(Number(e.target.value) || 0)}
+                    />
+                  </div>
+                  
                   <div className="flex justify-between items-center font-bold text-lg">
-                    <span>Total Pesanan GoFood:</span>
+                    <span>Total Pesanan + Ongkir:</span>
                     <span className="text-primary">
-                      Rp {totalAmount.toLocaleString('id-ID')}
+                      Rp {(totalAmount + deliveryFee).toLocaleString('id-ID')}
                     </span>
                   </div>
                 </div>
