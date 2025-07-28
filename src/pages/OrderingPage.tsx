@@ -433,16 +433,23 @@ const OrderingPage = () => {
                   Pesanan Anda
                 </CardTitle>
                </CardHeader>
-               <CardContent className="space-y-4">
-                 {/* Edit Notice */}
-                 {editingOrder && (
-                   <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-                     <Edit2 className="h-4 w-4 text-amber-600" />
-                     <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium">
-                       ⚠️ Anda sedang mengubah pesanan atas nama <strong>{editingOrder.customerName}</strong>
-                     </AlertDescription>
-                   </Alert>
-                 )}
+                <CardContent className="space-y-4">
+                  {/* Required Notice */}
+                  <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+                    <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
+                      💡 <strong>Nama wajib diisi</strong> untuk menambahkan pesanan ke grup order
+                    </AlertDescription>
+                  </Alert>
+                  
+                  {/* Edit Notice */}
+                  {editingOrder && (
+                    <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+                      <Edit2 className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium">
+                        ⚠️ Anda sedang mengubah pesanan atas nama <strong>{editingOrder.customerName}</strong>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 <div className="space-y-2">
                   <Label htmlFor="customer-name">Nama Pemesan</Label>
                   <Input
