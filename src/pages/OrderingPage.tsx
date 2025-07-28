@@ -308,7 +308,7 @@ const OrderingPage = () => {
                       <CardContent>
                         <div className="relative">
                           <div className="grid gap-3">
-                            {merchantMenus.slice(0, expandedMerchants.has(merchant.id) ? merchantMenus.length : 5).map((item) => {
+                            {merchantMenus.slice(0, expandedMerchants.has(merchant.id) ? merchantMenus.length : 4).map((item) => {
                               const cartItem = cart.find(c => c.menuItem.id === item.id);
                               const quantity = cartItem?.quantity || 0;
                               
@@ -348,13 +348,13 @@ const OrderingPage = () => {
                           </div>
                           
                           {/* Gradient fade effect and expand button */}
-                          {merchantMenus.length > 5 && !expandedMerchants.has(merchant.id) && (
+                          {merchantMenus.length > 4 && !expandedMerchants.has(merchant.id) && (
                             <div className="relative">
                               <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
                             </div>
                           )}
                           
-                          {merchantMenus.length > 5 && (
+                          {merchantMenus.length > 4 && (
                             <div className="flex justify-center mt-4">
                               <Button
                                 variant="ghost"
@@ -370,7 +370,7 @@ const OrderingPage = () => {
                                 ) : (
                                   <>
                                     <ChevronDown className="w-4 h-4 mr-1" />
-                                    Tampilkan Semua ({merchantMenus.length - 5} lainnya)
+                                    Tampilkan Semua ({merchantMenus.length - 4} lainnya)
                                   </>
                                 )}
                               </Button>
