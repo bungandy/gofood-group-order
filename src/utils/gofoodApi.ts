@@ -66,8 +66,33 @@ export class GofoodApiService {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.AUTH_TOKEN}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+
+          // Device & App Info
+          'PhoneMake': 'Apple',
+          'X-DeviceOS': 'iOS, 18.5',
+          'X-PhoneModel': 'Apple, iPhone 15 Pro Max',
+          'X-AppId': 'com.go-jek.ios',
+          'X-AppVersion': '5.24.1',
+          'X-Platform': 'iOS',
+          'User-Agent': 'Gojek/5.24.1 (com.go-jek.ios; build:149285589; iOS 18.5.0) NetworkSDK/2.4.1',
+
+          // Location & Regional
+          'X-Location': DEFAULT_LOCATION,
+          'X-Origin-Location': '',
+          'X-Location-Accuracy': '8.508432448047834',
+          'Gojek-Country-Code': 'ID',
+          'Gojek-Timezone': 'Asia/Jakarta',
+          'Gojek-Service-Area': '1',
+          'X-User-Locale': 'id_ID',
+
+          // Session & User
+          'customer_id': '99',
+
+          // Standard HTTP Headers
+          'Accept': '*/*',
+          'Accept-Encoding': 'br;q=1.0, gzip;q=0.9, deflate;q=0.8',
+          'Accept-Language': 'id-ID',
+          'Connection': 'keep-alive'
         }
       });
 
