@@ -57,6 +57,7 @@ export type Database = {
           created_at: string
           id: string
           link: string
+          merchant_data: Json | null
           merchant_id: string
           name: string
           session_id: string
@@ -65,6 +66,7 @@ export type Database = {
           created_at?: string
           id?: string
           link: string
+          merchant_data?: Json | null
           merchant_id: string
           name: string
           session_id: string
@@ -73,6 +75,7 @@ export type Database = {
           created_at?: string
           id?: string
           link?: string
+          merchant_data?: Json | null
           merchant_id?: string
           name?: string
           session_id?: string

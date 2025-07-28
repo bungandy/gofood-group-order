@@ -8,6 +8,7 @@ import { PlusCircle, Users, Share2, ShoppingBag, Utensils, Trash2 } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/Footer";
 import { useSupabaseSession } from "@/hooks/useSupabaseSession";
+import { GofoodUrlForm } from "@/components/GofoodUrlForm";
 
 const Index = () => {
   const [merchants, setMerchants] = useState([{ name: "", link: "" }]);
@@ -224,6 +225,11 @@ const Index = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* GoFood URL Import Section */}
+          <div className="mt-16">
+            <GofoodUrlForm />
+          </div>
         </div>
       </div>
       <Footer />

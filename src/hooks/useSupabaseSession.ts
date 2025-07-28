@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { GofoodApiService, GofoodMerchantData } from '@/utils/gofoodApi';
 
 interface Merchant {
   id: string;
@@ -150,11 +151,63 @@ export const useSupabaseSession = (sessionId?: string) => {
     }
   };
 
+  const fetchAndSaveMerchantData = async (gofoodUrl: string, merchantId: string) => {
+    try {
+      setLoading(true);
+      
+      // Validate GoFood URL
+      if (!GofoodApiService.isValidGofoodUrl(gofoodUrl)) {
+        throw new Error('URL GoFood tidak valid');
+      }
+
+      // Fetch merchant data from GoFood API
+      const merchantData = await GofoodApiService.fetchMerchantData(gofoodUrl);
+      if (!merchantData) {
+        throw new Error('Gagal mengambil data merchant dari GoFood API');
+      }
+
+      // Update merchant in database with fetched data
+      const { error: updateError } = await supabase
+        .from('merchants')
+        .update({ 
+          merchant_data: merchantData as any,
+          name: merchantData.restaurant?.name || 'Unknown Merchant'
+        })
+        .eq('merchant_id', merchantId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: 'Data merchant berhasil diperbarui!',
+        description: `Data untuk ${merchantData.restaurant?.name} telah disimpan`,
+      });
+
+      // Refresh session data
+      if (sessionId) {
+        await loadSession(sessionId);
+      }
+
+      return merchantData;
+    } catch (err: any) {
+      console.error('Error fetching merchant data:', err);
+      setError(err.message);
+      toast({
+        title: 'Gagal mengambil data merchant',
+        description: err.message,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     sessionData,
     loading,
     error,
     createSession,
+    fetchAndSaveMerchantData,
     refetch: () => sessionId && loadSession(sessionId)
   };
 };
