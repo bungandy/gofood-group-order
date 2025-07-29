@@ -11,7 +11,6 @@ import { useSupabaseSession } from "@/hooks/useSupabaseSession";
 
 const Index = () => {
   const [merchants, setMerchants] = useState([{
-    name: "",
     link: ""
   }]);
   const {
@@ -24,7 +23,6 @@ const Index = () => {
   } = useSupabaseSession();
   const addMerchant = () => {
     setMerchants([...merchants, {
-      name: "",
       link: ""
     }]);
   };
@@ -33,26 +31,26 @@ const Index = () => {
       setMerchants(merchants.filter((_, i) => i !== index));
     }
   };
-  const updateMerchant = (index: number, field: "name" | "link", value: string) => {
+  const updateMerchant = (index: number, value: string) => {
     const updated = merchants.map((merchant, i) => i === index ? {
       ...merchant,
-      [field]: value
+      link: value
     } : merchant);
     setMerchants(updated);
   };
   const handleCreateSession = async () => {
-    // Validate that at least one merchant has both name and link
-    const validMerchants = merchants.filter(m => m.name.trim() && m.link.trim());
+    // Validate that at least one merchant has a link
+    const validMerchants = merchants.filter(m => m.link.trim());
     if (validMerchants.length === 0) {
       toast({
         title: "Form tidak lengkap",
-        description: "Silakan isi minimal satu merchant dengan nama dan link GoFood",
+        description: "Silakan isi minimal satu link GoFood",
         variant: "destructive"
       });
       return;
     }
     try {
-      const sessionName = validMerchants.length === 1 ? validMerchants[0].name : `${validMerchants.length} Merchant`;
+      const sessionName = validMerchants.length === 1 ? 'Group Order' : `${validMerchants.length} Merchant Group Order`;
       const sessionId = await createSession(sessionName, validMerchants);
 
       toast({
@@ -60,10 +58,10 @@ const Index = () => {
         description: `Session ID: ${sessionId}`,
       });
 
-      // Navigate to ordering page - disabled for debugging
-      // setTimeout(() => {
-      //   navigate(`/order/${sessionId}`);
-      // }, 1000);
+      // Navigate to ordering page
+      setTimeout(() => {
+        navigate(`/order/${sessionId}`);
+      }, 1000);
     } catch (error) {
       // Error handling is done in the hook
       console.error('Failed to create session:', error);
@@ -113,7 +111,7 @@ const Index = () => {
                   <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-foreground">Buat Sesi</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-                      Tambahkan merchant GoFood favorit dan buat sesi pemesanan grup
+                      Masukkan link GoFood restaurant dan buat sesi pemesanan grup
                     </p>
                   </div>
                 </div>
@@ -173,14 +171,14 @@ const Index = () => {
                 Buat Sesi Pemesanan
               </CardTitle>
               <CardDescription>
-                Tambahkan satu atau lebih merchant GoFood untuk sesi grup
+                Tambahkan link GoFood untuk sesi grup. Nama restaurant akan diambil otomatis.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {merchants.map((merchant, index) => <div key={index} className="space-y-3 p-4 border rounded-lg bg-background/50">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium">
-                      Merchant {index + 1}
+                      Link GoFood {index + 1}
                     </Label>
                     {merchants.length > 1 && <Button variant="outline" size="sm" onClick={() => removeMerchant(index)} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
@@ -188,17 +186,13 @@ const Index = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Input placeholder="Contoh: Warteg Bahari" value={merchant.name} onChange={e => updateMerchant(index, "name", e.target.value)} className="transition-all duration-200 focus:ring-2 focus:ring-primary/20" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Input placeholder="https://gofood.co.id/restaurant/..." value={merchant.link} onChange={e => updateMerchant(index, "link", e.target.value)} className="transition-all duration-200 focus:ring-2 focus:ring-primary/20" />
+                    <Input placeholder="https://gofood.co.id/restaurant/..." value={merchant.link} onChange={e => updateMerchant(index, e.target.value)} className="transition-all duration-200 focus:ring-2 focus:ring-primary/20" />
                   </div>
                 </div>)}
               
               <Button variant="outline" onClick={addMerchant} className="w-full border-dashed border-primary/30 hover:border-primary hover:bg-primary/10 hover:scale-[1.02] transition-all duration-300 text-primary hover:text-primary">
                 <PlusCircle className="w-4 h-4 mr-2" />
-                Tambah Merchant
+                Tambah Link GoFood
               </Button>
               
               <Button onClick={handleCreateSession} disabled={loading} className="w-full bg-gradient-to-r from-primary to-primary-hover hover:shadow-lg transition-all duration-300 hover:scale-[1.02]" size="lg">

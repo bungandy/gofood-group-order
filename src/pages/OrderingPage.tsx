@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Share2, Users, CheckCircle, BarChart3 } from "lucide-react";
+import { Share2, Users, CheckCircle, BarChart3, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/Footer";
 import { LoadingPage } from "@/components/common/LoadingPage";
@@ -14,7 +14,8 @@ import {
   useOrderForm,
   OrderForm,
   OrderSummaryByMerchant,
-  MenuSection
+  MenuSection,
+  GroupChat
 } from "@/features";
 import type { Order } from "@/types";
 import { copyToClipboard } from "@/utils";
@@ -112,6 +113,10 @@ const OrderingPage: React.FC = () => {
     }
   };
 
+  const handleNewOrder = () => {
+    navigate('/');
+  };
+
   if (sessionLoading) {
     return <LoadingPage text="Memuat sesi..." />;
   }
@@ -128,6 +133,15 @@ const OrderingPage: React.FC = () => {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
             <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button 
+                onClick={handleNewOrder}
+                variant="default"
+                className="bg-primary hover:bg-primary/90 flex-1 sm:flex-initial text-sm"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Buat Order Baru
+              </Button>
+              
               <Button 
                 onClick={handleShareLink} 
                 variant="outline" 
@@ -159,6 +173,7 @@ const OrderingPage: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             <MenuSection
               merchants={merchants}
+              sessionId={sessionId}
               getItemQuantity={getItemQuantity}
               onAddToCart={addToCart}
               onRemoveFromCart={removeFromCart}
@@ -187,6 +202,13 @@ const OrderingPage: React.FC = () => {
               onEditOrder={handleEditOrder} 
               onDeleteOrder={handleDeleteOrder} 
               compact={true} 
+            />
+
+            {/* Group Chat */}
+            <GroupChat 
+              sessionId={sessionId || ''} 
+              currentUserName={customerName} 
+              orders={orders} 
             />
             
             {/* Overview Button */}

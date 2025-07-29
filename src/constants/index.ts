@@ -10,7 +10,7 @@ export const UI_CONFIG = {
   TOAST_DURATION: 2000,
   ANIMATION_DURATION: 300,
   DEBOUNCE_DELAY: 300,
-  MAX_VISIBLE_ITEMS: 4,
+  MAX_VISIBLE_ITEMS: 2,
   MERCHANT_EXPANSION_THRESHOLD: 4
 } as const;
 
@@ -39,7 +39,9 @@ export const CURRENCY = {
   CURRENCY_CODE: 'IDR'
 } as const;
 
-// Mock data for development
+// Mock data for development/fallback purposes
+// Note: The application now uses Supabase for merchant data
+// This is kept for backward compatibility and development
 export const MOCK_MERCHANTS = [
   {
     id: 'merchant_1',

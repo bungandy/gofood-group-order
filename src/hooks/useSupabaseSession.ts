@@ -101,7 +101,8 @@ export const useSupabaseSession = (sessionId?: string) => {
 
   const fetchMerchantDataFromProxy = async (gofoodUrl: string, merchantId: string, sessionId: string) => {
     try {
-      const proxyUrl = `http://localhost:3000/get-restaurant?url=${encodeURIComponent(gofoodUrl)}`;
+      const baseUrl = import.meta.env.VITE_GOFOOD_PROXY_URL || 'http://localhost:3000';
+      const proxyUrl = `${baseUrl}/get-restaurant?url=${encodeURIComponent(gofoodUrl)}`;
       const response = await fetch(proxyUrl);
       
       if (!response.ok) {
@@ -110,11 +111,18 @@ export const useSupabaseSession = (sessionId?: string) => {
       
       const merchantData = await response.json();
       
-      // Save merchant data to database
+      // Extract restaurant name from the API response
+      let restaurantName = `Merchant ${merchantId}`;
+      if (merchantData.success && merchantData.data?.page?.restaurant_detail?.name) {
+        restaurantName = merchantData.data.page.restaurant_detail.name;
+      }
+      
+      // Save merchant data and update name to database
       const { error: updateError } = await supabase
         .from('merchants')
         .update({
-          merchant_data: merchantData
+          merchant_data: merchantData,
+          name: restaurantName
         })
         .eq('session_id', sessionId)
         .eq('merchant_id', merchantId);
@@ -134,7 +142,7 @@ export const useSupabaseSession = (sessionId?: string) => {
     }
   };
 
-  const createSession = async (sessionName: string, merchants: Omit<Merchant, 'id'>[]) => {
+  const createSession = async (sessionName: string, merchants: { link: string }[]) => {
     try {
       setLoading(true);
       setError(null);
@@ -151,11 +159,11 @@ export const useSupabaseSession = (sessionId?: string) => {
 
       if (sessionError) throw sessionError;
 
-      // Create merchants
+      // Create merchants with temporary names, will be updated after fetching data
       const merchantData = merchants.map((merchant, index) => ({
         session_id: sessionId,
         merchant_id: `merchant_${index + 1}`,
-        name: merchant.name,
+        name: `Merchant ${index + 1}`, // Temporary name
         link: merchant.link
       }));
 
@@ -166,6 +174,7 @@ export const useSupabaseSession = (sessionId?: string) => {
       if (merchantsError) throw merchantsError;
 
       // Fetch merchant data from custom API proxy for each merchant
+      // This will update the merchant name with the actual restaurant name
       for (const merchant of merchantData) {
         try {
           console.log(`Fetching data for merchant: ${merchant.merchant_id}`);
