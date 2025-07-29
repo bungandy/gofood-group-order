@@ -101,7 +101,7 @@ export const useSupabaseSession = (sessionId?: string) => {
 
   const fetchMerchantDataFromProxy = async (gofoodUrl: string, merchantId: string, sessionId: string) => {
     try {
-      const baseUrl = import.meta.env.VITE_GOFOOD_PROXY_URL || 'http://localhost:3000';
+      const baseUrl = import.meta.env.VITE_GOFOOD_PROXY_URL || 'https://gofood-get-restaurant.zeabur.app';
       const proxyUrl = `${baseUrl}/get-restaurant?url=${encodeURIComponent(gofoodUrl)}`;
       const response = await fetch(proxyUrl);
       
