@@ -180,15 +180,26 @@ const Index = () => {
                 <p className="text-sm text-blue-700 mb-2">
                   Butuh bantuan mencari restaurant? Klik tombol di bawah untuk melihat daftar restaurant GoFood:
                 </p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => window.open('https://gofood.co.id/jakarta/karang-tengah-restaurants', '_blank')}
-                  className="text-blue-600 border-blue-300 hover:bg-blue-100 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 hover:shadow-sm"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Lihat Restaurant GoFood
-                </Button>
+                <div className="space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://gofood.co.id/jakarta/restaurants', '_blank')}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-100 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 hover:shadow-sm"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Lihat Restaurant GoFood
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://gofood.co.id/jakarta/karang-tengah-restaurants', '_blank')}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-100 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 hover:shadow-sm"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Karang Tengah
+                  </Button>
+                </div>
               </div>
 
               {merchants.map((merchant, index) => <div key={index} className="space-y-3 p-4 border rounded-lg bg-background/50">
