@@ -29,7 +29,6 @@ const OrderingPage: React.FC = () => {
   
   // Custom hooks
   const { sessionData, loading: sessionLoading } = useSupabaseSession(sessionId);
-  const { orders, createOrder, updateOrder, deleteOrder, loading: ordersLoading } = useSupabaseOrders(sessionId);
   const { 
     cart, 
     cartTotal, 
@@ -51,6 +50,7 @@ const OrderingPage: React.FC = () => {
     getFormData,
     initializeUserName
   } = useOrderForm();
+  const { orders, createOrder, updateOrder, deleteOrder, loading: ordersLoading, isConnected: ordersConnected, refreshConnection: refreshOrdersConnection } = useSupabaseOrders(sessionId, customerName);
 
   // Get merchants and session name from Supabase data
   const merchants = useMemo(() => sessionData?.merchants || [], [sessionData?.merchants]);
@@ -209,7 +209,9 @@ const OrderingPage: React.FC = () => {
               merchants={merchants} 
               onEditOrder={handleEditOrder} 
               onDeleteOrder={handleDeleteOrder} 
-              compact={true} 
+              compact={true}
+              isConnected={ordersConnected}
+              onRefreshConnection={refreshOrdersConnection}
             />
 
             {/* Group Chat */}

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, MessageCircle, AtSign } from "lucide-react";
+import { Send, MessageCircle, AtSign, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseChat } from "@/hooks/useSupabaseChat";
 
@@ -36,12 +36,14 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
   const [newMessage, setNewMessage] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   // Supabase hook for chat functionality
-  const { messages, sendMessage, loading, isConnected } = useSupabaseChat(sessionId);
+  const { messages, sendMessage, loading, isConnected, refreshConnection } = useSupabaseChat(sessionId);
 
   // Get all unique customer names for mentions
   const availableUsers = Array.from(new Set(orders.map(order => order.customerName)));
@@ -73,12 +75,38 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     return () => clearTimeout(timeoutId);
   }, [messages]);
 
-  // Separate effect for notification sound to avoid interference with scrolling
+  // Auto scroll when typing indicator appears
   useEffect(() => {
-    // Play notification sound for new messages from other users
+    if (isTyping) {
+      const timeoutId = setTimeout(scrollToBottom, 50);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isTyping]);
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Separate effect for notification sound and toast to avoid interference with scrolling
+  useEffect(() => {
+    // Play notification sound and show toast for new messages from other users
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.senderName !== currentUserName && !lastMessage.isOptimistic) {
+        // Show toast notification for new message
+        toast({
+          title: `Pesan baru dari ${lastMessage.senderName}`,
+          description: lastMessage.message.length > 50 
+            ? lastMessage.message.substring(0, 50) + '...' 
+            : lastMessage.message,
+          duration: 3000,
+        });
+
         // Simple notification sound using Web Audio API
         try {
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -100,7 +128,15 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
         }
       }
     }
-  }, [messages, currentUserName]);
+  }, [messages, currentUserName, toast]);
+
+  const handleRefreshConnection = () => {
+    toast({
+      title: 'Menyegarkan koneksi',
+      description: 'Mencoba menyambung ulang ke chat...',
+    });
+    refreshConnection();
+  };
 
   const sendChatMessage = async () => {
     if (!newMessage.trim() || !currentUserName || isSending) {
@@ -128,6 +164,13 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     const messageToSend = newMessage;
     setNewMessage(""); // Clear input immediately for better UX
     setShowMentions(false);
+    setIsTyping(false); // Hide typing indicator
+    
+    // Clear typing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
 
     // Scroll to bottom immediately after adding optimistic message
     setTimeout(scrollToBottom, 50);
@@ -177,6 +220,21 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNewMessage(value);
+    
+    // Show typing indicator
+    if (value.trim() && !isTyping) {
+      setIsTyping(true);
+    }
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set new timeout to hide typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 1000);
     
     // Show mentions when typing @
     const lastAtIndex = value.lastIndexOf("@");
@@ -260,11 +318,28 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
               {messages.length}
             </Badge>
           )}
-          <div className="ml-auto flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className="text-xs text-muted-foreground">
-              {isConnected ? 'Online' : 'Offline'}
-            </span>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {isConnected ? (
+                <Wifi className="w-3 h-3 text-green-500" />
+              ) : (
+                <WifiOff className="w-3 h-3 text-red-500" />
+              )}
+              <span className="text-xs text-muted-foreground">
+                {isConnected ? 'Realtime Aktif' : 'Terputus'}
+              </span>
+            </div>
+            {!isConnected && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefreshConnection}
+                className="h-6 px-2 text-xs"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Sambung
+              </Button>
+            )}
           </div>
         </CardTitle>
       </CardHeader>
@@ -278,6 +353,23 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
           ) : (
             <div className="space-y-1">
               {messages.map(renderMessage)}
+              {isTyping && currentUserName && (
+                <div className="flex justify-start mb-3">
+                  <div className="max-w-[70%] rounded-lg px-3 py-2 bg-muted/50 border border-dashed">
+                    <div className="text-xs font-medium mb-1 text-muted-foreground">
+                      {currentUserName}
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <span>sedang mengetik</span>
+                      <div className="flex gap-1">
+                        <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </ScrollArea>

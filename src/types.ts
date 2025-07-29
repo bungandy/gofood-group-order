@@ -159,6 +159,9 @@ export interface UseOrdersReturn {
   deleteOrder: (id: string) => Promise<void>;
   loading: boolean;
   error: string | null;
+  isConnected?: boolean;
+  refreshConnection?: () => void;
+  refetch: () => void;
 }
 
 // Form types

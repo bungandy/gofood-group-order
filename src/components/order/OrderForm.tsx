@@ -56,7 +56,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         {/* Required Notice */}
         <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
           <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
-            💡 <strong>Nama wajib diisi</strong> untuk menambahkan pesanan ke grup order
+            💡 <strong>Nama wajib diisi</strong> untuk menambahkan pesanan ke grup order atau chating.
           </AlertDescription>
         </Alert>
         

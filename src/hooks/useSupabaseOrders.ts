@@ -1,28 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Order, OrderItem, UseOrdersReturn } from '@/types';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { generateId } from '@/utils';
 
-export const useSupabaseOrders = (sessionId?: string): UseOrdersReturn => {
+export const useSupabaseOrders = (sessionId?: string, currentUserName?: string): UseOrdersReturn => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
+  const channelRef = useRef<any>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
 
-  useEffect(() => {
-    if (sessionId) {
-      loadOrders(sessionId);
-    } else {
-      setLoading(false);
-    }
-  }, [sessionId]);
-
-  const loadOrders = async (id: string) => {
+  const loadOrders = useCallback(async (id: string) => {
     try {
       setLoading(true);
       setError(null);
+
+      console.log(`Loading orders for session: ${id}`);
 
       // Get orders with their items
       const { data: ordersData, error: ordersError } = await supabase
@@ -55,6 +54,7 @@ export const useSupabaseOrders = (sessionId?: string): UseOrdersReturn => {
         }))
       }));
 
+      console.log(`Loaded ${transformedOrders.length} orders`);
       setOrders(transformedOrders);
     } catch (err: any) {
       console.error('Error loading orders:', err);
@@ -67,7 +67,170 @@ export const useSupabaseOrders = (sessionId?: string): UseOrdersReturn => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Memoize the order handlers to prevent subscription recreation
+  const handleNewOrder = useCallback((payload: any) => {
+    console.log('Real-time new order received:', payload);
+    
+    const newOrder = payload.new;
+    
+    // Show notification if this order was created by someone else
+    if (currentUserName && newOrder.customer_name !== currentUserName) {
+      toast({
+        title: '🍽️ Pesanan Baru!',
+        description: `${newOrder.customer_name} telah menambahkan pesanan (Rp ${newOrder.total.toLocaleString('id-ID')})`,
+        duration: 5000,
+      });
+    }
+    
+    // Reload orders to get complete data with items
+    if (sessionId) {
+      loadOrders(sessionId);
+    }
+  }, [currentUserName, sessionId, toast, loadOrders]);
+
+  const handleUpdatedOrder = useCallback((payload: any) => {
+    console.log('Real-time order update received:', payload);
+    
+    const updatedOrder = payload.new;
+    
+    // Show notification if this order was updated by someone else
+    if (currentUserName && updatedOrder.customer_name !== currentUserName) {
+      toast({
+        title: '📝 Pesanan Diperbarui',
+        description: `${updatedOrder.customer_name} telah memperbarui pesanannya`,
+        duration: 4000,
+      });
+    }
+    
+    // Reload orders to get complete updated data
+    if (sessionId) {
+      loadOrders(sessionId);
+    }
+  }, [currentUserName, sessionId, toast]);
+
+  const handleDeletedOrder = useCallback((payload: any) => {
+    console.log('Real-time order deletion received:', payload);
+    
+    const deletedOrder = payload.old;
+    
+    // Show notification if this order was deleted by someone else
+    if (currentUserName && deletedOrder.customer_name !== currentUserName) {
+      toast({
+        title: '🗑️ Pesanan Dihapus',
+        description: `Pesanan ${deletedOrder.customer_name} telah dihapus`,
+        duration: 4000,
+        variant: 'destructive',
+      });
+    }
+    
+    // Update local state immediately
+    setOrders(prev => prev.filter(order => order.id !== deletedOrder.order_id));
+  }, [currentUserName, toast]);
+
+  const setupOrdersSubscription = useCallback(() => {
+    if (!sessionId) return;
+
+    // Clean up existing subscription
+    if (channelRef.current) {
+      console.log('Cleaning up existing orders subscription');
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Clear any existing retry timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+
+    console.log(`Setting up orders subscription for session: ${sessionId}`);
+
+    // Set up real-time subscription for orders
+    const channel = supabase
+      .channel(`orders_${sessionId}_${Date.now()}`) // Add timestamp to ensure unique channel
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: `session_id=eq.${sessionId}`
+        },
+        handleNewOrder
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `session_id=eq.${sessionId}`
+        },
+        handleUpdatedOrder
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'orders',
+          filter: `session_id=eq.${sessionId}`
+        },
+        handleDeletedOrder
+      )
+      .subscribe((status) => {
+        console.log('Orders subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true);
+          setError(null);
+          reconnectAttempts.current = 0;
+          console.log('Orders subscription active');
+          
+          toast({
+            title: 'Realtime Pesanan Aktif',
+            description: 'Anda akan mendapat notifikasi untuk pesanan baru',
+            duration: 3000,
+          });
+        } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+          setIsConnected(false);
+          console.error('Orders subscription error/closed:', status);
+          
+          // Retry connection with exponential backoff
+          if (reconnectAttempts.current < maxReconnectAttempts) {
+            reconnectAttempts.current++;
+            const retryDelay = Math.min(1000 * Math.pow(2, reconnectAttempts.current - 1), 30000);
+            
+            console.log(`Retrying orders connection in ${retryDelay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
+            
+            retryTimeoutRef.current = setTimeout(() => {
+              console.log('Retrying orders connection...');
+              setupOrdersSubscription();
+            }, retryDelay);
+          } else {
+            console.error('Max orders reconnection attempts reached');
+            toast({
+              title: 'Koneksi realtime pesanan gagal',
+              description: 'Silakan refresh halaman untuk menyambung kembali',
+              variant: 'destructive',
+            });
+          }
+        }
+      });
+
+    channelRef.current = channel;
+  }, [sessionId, handleNewOrder, handleUpdatedOrder, handleDeletedOrder, toast]);
+
+  // Force refresh subscription
+  const refreshConnection = useCallback(() => {
+    console.log('Manually refreshing orders connection...');
+    reconnectAttempts.current = 0;
+    setupOrdersSubscription();
+  }, [setupOrdersSubscription]);
+
+
 
   const createOrder = async (orderData: Omit<Order, 'id' | 'timestamp'>) => {
     if (!sessionId) return;
@@ -230,13 +393,34 @@ export const useSupabaseOrders = (sessionId?: string): UseOrdersReturn => {
     }
   };
 
+  useEffect(() => {
+    if (sessionId) {
+      loadOrders(sessionId);
+      setupOrdersSubscription();
+    } else {
+      setLoading(false);
+    }
+
+    return () => {
+      console.log('Cleaning up orders subscription');
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, [sessionId, setupOrdersSubscription]);
+
   return {
     orders,
     loading,
     error,
+    isConnected,
     createOrder,
     updateOrder,
     deleteOrder,
+    refreshConnection,
     refetch: () => sessionId && loadOrders(sessionId)
   };
 };

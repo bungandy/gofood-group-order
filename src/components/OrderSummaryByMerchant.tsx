@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Edit2, Trash2, StickyNote, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Edit2, Trash2, StickyNote, User, ChevronDown, ChevronUp, Wifi, WifiOff, RefreshCw } from "lucide-react";
 
 interface MenuItem {
   id: string;
@@ -38,6 +38,8 @@ interface OrderSummaryByMerchantProps {
   showDeliveryFee?: boolean;
   merchantDeliveryFees?: Record<string, number>;
   compact?: boolean;
+  isConnected?: boolean;
+  onRefreshConnection?: () => void;
 }
 
 export const OrderSummaryByMerchant = ({ 
@@ -47,7 +49,9 @@ export const OrderSummaryByMerchant = ({
   onDeleteOrder, 
   showDeliveryFee = false,
   merchantDeliveryFees: externalDeliveryFees,
-  compact = false
+  compact = false,
+  isConnected = true,
+  onRefreshConnection
 }: OrderSummaryByMerchantProps) => {
   const [internalDeliveryFees, setInternalDeliveryFees] = useState<Record<string, number>>({});
   const [expandedMerchants, setExpandedMerchants] = useState<Record<string, boolean>>({});
@@ -119,8 +123,35 @@ export const OrderSummaryByMerchant = ({
   return (
     <Card className="bg-white/80 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle>Ringkasan Pesanan Grup</CardTitle>
-        <CardDescription>{orders.length} pesanan terkumpul</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Ringkasan Pesanan Grup</CardTitle>
+            <CardDescription>{orders.length} pesanan terkumpul</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {isConnected ? (
+                <Wifi className="w-3 h-3 text-green-500" />
+              ) : (
+                <WifiOff className="w-3 h-3 text-red-500" />
+              )}
+              <span className="text-xs text-muted-foreground">
+                {isConnected ? 'Realtime' : 'Terputus'}
+              </span>
+            </div>
+            {!isConnected && onRefreshConnection && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRefreshConnection}
+                className="h-6 px-2 text-xs"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Sambung
+              </Button>
+            )}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {Object.entries(groupedOrders).map(([merchantName, merchantOrders]) => {

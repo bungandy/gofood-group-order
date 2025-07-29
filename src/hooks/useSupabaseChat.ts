@@ -20,6 +20,9 @@ export const useSupabaseChat = (sessionId?: string) => {
   const channelRef = useRef<any>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const optimisticTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
 
   // Memoize the message handler to prevent subscription recreation
   const handleNewMessage = useCallback((payload: any) => {
@@ -63,19 +66,53 @@ export const useSupabaseChat = (sessionId?: string) => {
       console.log('Adding new message (not optimistic replacement)');
       return [...prev, newMessage];
     });
+
+    // Reset reconnect attempts on successful message
+    reconnectAttempts.current = 0;
   }, []);
+
+  // Heartbeat function to check connection
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+    }
+
+    heartbeatRef.current = setInterval(() => {
+      if (channelRef.current && sessionId) {
+        // Check if channel is still connected
+        const channelState = channelRef.current.state;
+        console.log('Heartbeat check - Channel state:', channelState);
+        
+        if (channelState !== 'joined') {
+          console.log('Channel disconnected, attempting reconnection...');
+          setIsConnected(false);
+          setupSubscription();
+        }
+      }
+    }, 30000); // Check every 30 seconds
+  }, [sessionId]);
 
   const setupSubscription = useCallback(() => {
     if (!sessionId) return;
 
     // Clean up existing subscription
     if (channelRef.current) {
+      console.log('Cleaning up existing subscription');
       supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
     }
+
+    // Clear any existing retry timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+
+    console.log(`Setting up chat subscription for session: ${sessionId}`);
 
     // Set up real-time subscription with better error handling
     const channel = supabase
-      .channel(`chat_${sessionId}`)
+      .channel(`chat_${sessionId}_${Date.now()}`) // Add timestamp to ensure unique channel
       .on(
         'postgres_changes',
         {
@@ -92,35 +129,68 @@ export const useSupabaseChat = (sessionId?: string) => {
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
           setError(null);
+          reconnectAttempts.current = 0;
           console.log('Chat subscription active');
           
-          // Test subscription with a heartbeat (optional debug)
-          console.log('Testing real-time subscription...');
-        } else if (status === 'CHANNEL_ERROR') {
-          setIsConnected(false);
-          console.error('Chat subscription error');
-          
-          // Retry connection after 3 seconds
-          if (retryTimeoutRef.current) {
-            clearTimeout(retryTimeoutRef.current);
-          }
-          retryTimeoutRef.current = setTimeout(() => {
-            console.log('Retrying chat connection...');
-            setupSubscription();
-          }, 3000);
+          // Start heartbeat monitoring
+          startHeartbeat();
           
           toast({
-            title: 'Koneksi chat bermasalah',
-            description: 'Mencoba menyambung kembali...',
-            variant: 'destructive',
+            title: 'Chat terhubung',
+            description: 'Realtime chat sudah aktif',
           });
-        } else if (status === 'CLOSED') {
+        } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
           setIsConnected(false);
+          console.error('Chat subscription error/closed:', status);
+          
+          // Stop heartbeat
+          if (heartbeatRef.current) {
+            clearInterval(heartbeatRef.current);
+            heartbeatRef.current = null;
+          }
+          
+          // Retry connection with exponential backoff
+          if (reconnectAttempts.current < maxReconnectAttempts) {
+            reconnectAttempts.current++;
+            const retryDelay = Math.min(1000 * Math.pow(2, reconnectAttempts.current - 1), 30000);
+            
+            console.log(`Retrying chat connection in ${retryDelay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
+            
+            retryTimeoutRef.current = setTimeout(() => {
+              console.log('Retrying chat connection...');
+              setupSubscription();
+            }, retryDelay);
+            
+            toast({
+              title: 'Koneksi chat terputus',
+              description: `Mencoba menyambung kembali... (${reconnectAttempts.current}/${maxReconnectAttempts})`,
+              variant: 'destructive',
+            });
+          } else {
+            console.error('Max reconnection attempts reached');
+            toast({
+              title: 'Koneksi chat gagal',
+              description: 'Tidak dapat menyambung ke chat. Silakan refresh halaman.',
+              variant: 'destructive',
+            });
+          }
+        } else if (status === 'TIMED_OUT') {
+          console.warn('Chat subscription timed out');
+          setIsConnected(false);
+          // Trigger reconnection
+          setupSubscription();
         }
       });
 
     channelRef.current = channel;
-  }, [sessionId, handleNewMessage, toast]);
+  }, [sessionId, handleNewMessage, toast, startHeartbeat]);
+
+  // Force refresh subscription
+  const refreshConnection = useCallback(() => {
+    console.log('Manually refreshing chat connection...');
+    reconnectAttempts.current = 0;
+    setupSubscription();
+  }, [setupSubscription]);
 
   useEffect(() => {
     if (sessionId) {
@@ -131,11 +201,15 @@ export const useSupabaseChat = (sessionId?: string) => {
     }
 
     return () => {
+      console.log('Cleaning up chat subscription');
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
+      }
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
       }
       // Clear all optimistic timeouts
       optimisticTimeouts.current.forEach(timeout => clearTimeout(timeout));
@@ -147,6 +221,8 @@ export const useSupabaseChat = (sessionId?: string) => {
     try {
       setLoading(true);
       setError(null);
+
+      console.log(`Loading messages for session: ${id}`);
 
       const { data, error: messagesError } = await supabase
         .from('chat_messages')
@@ -164,6 +240,7 @@ export const useSupabaseChat = (sessionId?: string) => {
         mentions: msg.mentions
       }));
 
+      console.log(`Loaded ${transformedMessages.length} messages`);
       setMessages(transformedMessages);
     } catch (err: any) {
       console.error('Error loading messages:', err);
@@ -325,6 +402,7 @@ export const useSupabaseChat = (sessionId?: string) => {
     error,
     isConnected,
     sendMessage,
+    refreshConnection,
     refetch: () => sessionId && loadMessages(sessionId)
   };
 };
