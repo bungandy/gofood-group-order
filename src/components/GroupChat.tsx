@@ -43,7 +43,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
   const { toast } = useToast();
 
   // Supabase hook for chat functionality
-  const { messages, sendMessage, loading, isConnected, refreshConnection } = useSupabaseChat(sessionId);
+  const { messages, sendMessage, sendTypingStatus, loading, isConnected, refreshConnection, typingUsers } = useSupabaseChat(sessionId);
 
   // Get all unique customer names for mentions
   const availableUsers = Array.from(new Set(orders.map(order => order.customerName)));
@@ -75,13 +75,13 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     return () => clearTimeout(timeoutId);
   }, [messages]);
 
-  // Auto scroll when typing indicator appears
+  // Auto scroll when typing indicator appears (local or from others)
   useEffect(() => {
-    if (isTyping) {
+    if (isTyping || typingUsers.length > 0) {
       const timeoutId = setTimeout(scrollToBottom, 50);
       return () => clearTimeout(timeoutId);
     }
-  }, [isTyping]);
+  }, [isTyping, typingUsers]);
 
   // Cleanup typing timeout on unmount
   useEffect(() => {
@@ -166,6 +166,11 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     setShowMentions(false);
     setIsTyping(false); // Hide typing indicator
     
+    // Send typing stop status to others
+    if (currentUserName) {
+      sendTypingStatus(currentUserName, false);
+    }
+    
     // Clear typing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -221,9 +226,10 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     const value = e.target.value;
     setNewMessage(value);
     
-    // Show typing indicator
-    if (value.trim() && !isTyping) {
+    // Show typing indicator and send to others
+    if (value.trim() && !isTyping && currentUserName) {
       setIsTyping(true);
+      sendTypingStatus(currentUserName, true);
     }
     
     // Clear existing timeout
@@ -234,6 +240,9 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     // Set new timeout to hide typing indicator
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
+      if (currentUserName) {
+        sendTypingStatus(currentUserName, false);
+      }
     }, 1000);
     
     // Show mentions when typing @
@@ -251,22 +260,27 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
   };
 
   const renderMessage = (message: ChatMessage) => {
-    let messageContent = message.message;
-    
-    // Replace mentions with highlighted text
-    if (message.mentions) {
-      message.mentions.forEach(mention => {
-        const regex = new RegExp(`@${mention}`, "g");
-        messageContent = messageContent.replace(
-          regex, 
-          `<span class="bg-primary/20 text-primary px-1 rounded font-medium">@${mention}</span>`
-        );
-      });
-    }
-
     const isCurrentUser = message.senderName === currentUserName;
     const isMentioned = message.mentions?.includes(currentUserName);
     const isOptimistic = message.isOptimistic;
+    
+    let messageContent = message.message;
+    
+    // Replace mentions with highlighted text with proper contrast
+    if (message.mentions) {
+      message.mentions.forEach(mention => {
+        const regex = new RegExp(`@${mention}`, "g");
+        // Use different text color based on whether it's current user's message or not
+        const mentionStyle = isCurrentUser 
+          ? 'color: #ffffff; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.3);'
+          : 'color: hsl(var(--primary)); font-weight: bold;';
+        
+        messageContent = messageContent.replace(
+          regex, 
+          `<span style="${mentionStyle}">@${mention}</span>`
+        );
+      });
+    }
 
     return (
       <div
@@ -280,7 +294,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
             isCurrentUser
               ? "bg-primary text-primary-foreground"
               : isMentioned
-              ? "bg-accent/50 border border-primary/30"
+              ? "bg-green-50 border border-green-300 dark:bg-green-950 dark:border-green-700"
               : "bg-muted"
           }`}
         >
@@ -353,11 +367,32 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
           ) : (
             <div className="space-y-1">
               {messages.map(renderMessage)}
-              {isTyping && currentUserName && (
-                <div className="flex justify-start mb-3">
+              
+              {/* Show typing indicators for other users */}
+              {typingUsers.filter(user => user.username !== currentUserName).map(user => (
+                <div key={user.username} className="flex justify-start mb-3">
                   <div className="max-w-[70%] rounded-lg px-3 py-2 bg-muted/50 border border-dashed">
                     <div className="text-xs font-medium mb-1 text-muted-foreground">
-                      {currentUserName}
+                      {user.username}
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <span>sedang mengetik</span>
+                      <div className="flex gap-1">
+                        <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Show typing indicator for current user (local only) */}
+              {isTyping && currentUserName && (
+                <div className="flex justify-end mb-3">
+                  <div className="max-w-[70%] rounded-lg px-3 py-2 bg-primary/20 border border-dashed border-primary/30">
+                    <div className="text-xs font-medium mb-1 text-muted-foreground">
+                      Anda
                     </div>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <span>sedang mengetik</span>

@@ -11,11 +11,17 @@ interface ChatMessage {
   isOptimistic?: boolean; // Add flag for optimistic updates
 }
 
+interface TypingUser {
+  username: string;
+  timestamp: number;
+}
+
 export const useSupabaseChat = (sessionId?: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const { toast } = useToast();
   const channelRef = useRef<any>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -23,6 +29,30 @@ export const useSupabaseChat = (sessionId?: string) => {
   const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to send typing status
+  const sendTypingStatus = useCallback((username: string, isTyping: boolean) => {
+    if (!channelRef.current || !username) return;
+
+    console.log('Sending typing status:', { username, isTyping });
+    
+    if (isTyping) {
+      // Send typing start
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'typing_start',
+        payload: { username, timestamp: Date.now() }
+      });
+    } else {
+      // Send typing stop
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'typing_stop',
+        payload: { username }
+      });
+    }
+  }, []);
 
   // Memoize the message handler to prevent subscription recreation
   const handleNewMessage = useCallback((payload: any) => {
@@ -69,6 +99,37 @@ export const useSupabaseChat = (sessionId?: string) => {
 
     // Reset reconnect attempts on successful message
     reconnectAttempts.current = 0;
+  }, []);
+
+  // Handle typing events
+  const handleTypingStart = useCallback((payload: any) => {
+    const { username, timestamp } = payload;
+    console.log('Typing start received:', { username, timestamp });
+    
+    setTypingUsers(prev => {
+      // Remove existing entry for this user and add new one
+      const filtered = prev.filter(user => user.username !== username);
+      return [...filtered, { username, timestamp }];
+    });
+  }, []);
+
+  const handleTypingStop = useCallback((payload: any) => {
+    const { username } = payload;
+    console.log('Typing stop received:', { username });
+    
+    setTypingUsers(prev => prev.filter(user => user.username !== username));
+  }, []);
+
+  // Clean up old typing indicators (in case stop event is missed)
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers(prev => 
+        prev.filter(user => now - user.timestamp < 5000) // Remove if older than 5 seconds
+      );
+    }, 1000);
+
+    return () => clearInterval(cleanupInterval);
   }, []);
 
   // Heartbeat function to check connection
@@ -123,6 +184,16 @@ export const useSupabaseChat = (sessionId?: string) => {
         },
         handleNewMessage
       )
+              .on(
+          'broadcast',
+          { event: 'typing_start' },
+          handleTypingStart
+        )
+        .on(
+          'broadcast',
+          { event: 'typing_stop' },
+          handleTypingStop
+        )
       .subscribe((status) => {
         console.log('Chat subscription status:', status);
         
@@ -183,7 +254,7 @@ export const useSupabaseChat = (sessionId?: string) => {
       });
 
     channelRef.current = channel;
-  }, [sessionId, handleNewMessage, toast, startHeartbeat]);
+  }, [sessionId, handleNewMessage, toast, startHeartbeat, handleTypingStart, handleTypingStop]);
 
   // Force refresh subscription
   const refreshConnection = useCallback(() => {
@@ -396,13 +467,15 @@ export const useSupabaseChat = (sessionId?: string) => {
     }
   };
 
-  return {
-    messages,
-    loading,
-    error,
-    isConnected,
-    sendMessage,
-    refreshConnection,
-    refetch: () => sessionId && loadMessages(sessionId)
-  };
+      return {
+      messages,
+      loading,
+      error,
+      isConnected,
+      sendMessage,
+      sendTypingStatus,
+      refreshConnection,
+      refetch: () => sessionId && loadMessages(sessionId),
+      typingUsers
+    };
 };
