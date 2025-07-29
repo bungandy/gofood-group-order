@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Users, Share2, ShoppingBag, Utensils, Trash2 } from "lucide-react";
+import { PlusCircle, Users, Share2, ShoppingBag, Utensils, Trash2, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/Footer";
 import { useSupabaseSession } from "@/hooks/useSupabaseSession";
@@ -175,6 +175,22 @@ const Index = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Reference Link Button */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700 mb-2">
+                  Butuh bantuan mencari restaurant? Klik tombol di bawah untuk melihat daftar restaurant GoFood:
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.open('https://gofood.co.id/jakarta/karang-tengah-restaurants', '_blank')}
+                  className="text-blue-600 border-blue-300 hover:bg-blue-100 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 hover:shadow-sm"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Lihat Restaurant GoFood
+                </Button>
+              </div>
+
               {merchants.map((merchant, index) => <div key={index} className="space-y-3 p-4 border rounded-lg bg-background/50">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium">
