@@ -42,6 +42,13 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
+  // Store current user name in localStorage for polling detection
+  useEffect(() => {
+    if (currentUserName) {
+      localStorage.setItem('currentUserName', currentUserName);
+    }
+  }, [currentUserName]);
+
   // Supabase hook for chat functionality
   const { messages, sendMessage, sendTypingStatus, loading, isConnected, refreshConnection, typingUsers } = useSupabaseChat(sessionId);
 

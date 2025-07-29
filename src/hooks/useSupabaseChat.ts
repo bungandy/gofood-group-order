@@ -8,7 +8,7 @@ interface ChatMessage {
   message: string;
   timestamp: string;
   mentions?: string[];
-  isOptimistic?: boolean; // Add flag for optimistic updates
+  isOptimistic?: boolean;
 }
 
 interface TypingUser {
@@ -26,274 +26,19 @@ export const useSupabaseChat = (sessionId?: string) => {
   const channelRef = useRef<any>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const optimisticTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
-  const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 5;
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxReconnectAttempts = 3;
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = useRef(0);
 
-  // Function to send typing status
-  const sendTypingStatus = useCallback((username: string, isTyping: boolean) => {
-    if (!channelRef.current || !username) return;
-
-    console.log('Sending typing status:', { username, isTyping });
-    
-    if (isTyping) {
-      // Send typing start
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'typing_start',
-        payload: { username, timestamp: Date.now() }
-      });
-    } else {
-      // Send typing stop
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'typing_stop',
-        payload: { username }
-      });
-    }
-  }, []);
-
-  // Memoize the message handler to prevent subscription recreation
-  const handleNewMessage = useCallback((payload: any) => {
-    console.log('Real-time message received:', payload);
-    
-    const newMessage: ChatMessage = {
-      id: payload.new.message_id,
-      senderName: payload.new.sender_name,
-      message: payload.new.message,
-      timestamp: payload.new.created_at,
-      mentions: payload.new.mentions
-    };
-    
-    console.log('Processed new message:', newMessage);
-    
-    setMessages(prev => {
-      console.log('Current messages before update:', prev.map(m => ({ id: m.id, isOptimistic: m.isOptimistic })));
-      
-      // Check if message already exists (to prevent duplicates from optimistic updates)
-      const existingMessage = prev.find(msg => msg.id === newMessage.id);
-      console.log('Existing message found:', existingMessage);
-      
-      if (existingMessage) {
-        // Clear the optimistic timeout since we got the real message
-        const timeout = optimisticTimeouts.current.get(newMessage.id);
-        if (timeout) {
-          console.log('Clearing optimistic timeout for:', newMessage.id);
-          clearTimeout(timeout);
-          optimisticTimeouts.current.delete(newMessage.id);
-        }
-        
-        // Replace optimistic message with real one
-        const updatedMessages = prev.map(msg => 
-          msg.id === newMessage.id ? { ...newMessage, isOptimistic: false } : msg
-        );
-        console.log('Updated messages after replacing optimistic:', updatedMessages.map(m => ({ id: m.id, isOptimistic: m.isOptimistic })));
-        return updatedMessages;
-      }
-      
-      // Add new message if it doesn't exist
-      console.log('Adding new message (not optimistic replacement)');
-      return [...prev, newMessage];
-    });
-
-    // Reset reconnect attempts on successful message
-    reconnectAttempts.current = 0;
-  }, []);
-
-  // Handle typing events
-  const handleTypingStart = useCallback((payload: any) => {
-    const { username, timestamp } = payload;
-    console.log('Typing start received:', { username, timestamp });
-    
-    setTypingUsers(prev => {
-      // Remove existing entry for this user and add new one
-      const filtered = prev.filter(user => user.username !== username);
-      return [...filtered, { username, timestamp }];
-    });
-  }, []);
-
-  const handleTypingStop = useCallback((payload: any) => {
-    const { username } = payload;
-    console.log('Typing stop received:', { username });
-    
-    setTypingUsers(prev => prev.filter(user => user.username !== username));
-  }, []);
-
-  // Clean up old typing indicators (in case stop event is missed)
-  useEffect(() => {
-    const cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      setTypingUsers(prev => 
-        prev.filter(user => now - user.timestamp < 5000) // Remove if older than 5 seconds
-      );
-    }, 1000);
-
-    return () => clearInterval(cleanupInterval);
-  }, []);
-
-  // Heartbeat function to check connection
-  const startHeartbeat = useCallback(() => {
-    if (heartbeatRef.current) {
-      clearInterval(heartbeatRef.current);
-    }
-
-    heartbeatRef.current = setInterval(() => {
-      if (channelRef.current && sessionId) {
-        // Check if channel is still connected
-        const channelState = channelRef.current.state;
-        console.log('Heartbeat check - Channel state:', channelState);
-        
-        if (channelState !== 'joined') {
-          console.log('Channel disconnected, attempting reconnection...');
-          setIsConnected(false);
-          setupSubscription();
-        }
-      }
-    }, 30000); // Check every 30 seconds
-  }, [sessionId]);
-
-  const setupSubscription = useCallback(() => {
-    if (!sessionId) return;
-
-    // Clean up existing subscription
-    if (channelRef.current) {
-      console.log('Cleaning up existing subscription');
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-
-    // Clear any existing retry timeout
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-      retryTimeoutRef.current = null;
-    }
-
-    console.log(`Setting up chat subscription for session: ${sessionId}`);
-
-    // Set up real-time subscription with better error handling
-    const channel = supabase
-      .channel(`chat_${sessionId}_${Date.now()}`) // Add timestamp to ensure unique channel
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `session_id=eq.${sessionId}`
-        },
-        handleNewMessage
-      )
-              .on(
-          'broadcast',
-          { event: 'typing_start' },
-          handleTypingStart
-        )
-        .on(
-          'broadcast',
-          { event: 'typing_stop' },
-          handleTypingStop
-        )
-      .subscribe((status) => {
-        console.log('Chat subscription status:', status);
-        
-        if (status === 'SUBSCRIBED') {
-          setIsConnected(true);
-          setError(null);
-          reconnectAttempts.current = 0;
-          console.log('Chat subscription active');
-          
-          // Start heartbeat monitoring
-          startHeartbeat();
-          
-          toast({
-            title: 'Chat terhubung',
-            description: 'Realtime chat sudah aktif',
-          });
-        } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-          setIsConnected(false);
-          console.error('Chat subscription error/closed:', status);
-          
-          // Stop heartbeat
-          if (heartbeatRef.current) {
-            clearInterval(heartbeatRef.current);
-            heartbeatRef.current = null;
-          }
-          
-          // Retry connection with exponential backoff
-          if (reconnectAttempts.current < maxReconnectAttempts) {
-            reconnectAttempts.current++;
-            const retryDelay = Math.min(1000 * Math.pow(2, reconnectAttempts.current - 1), 30000);
-            
-            console.log(`Retrying chat connection in ${retryDelay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
-            
-            retryTimeoutRef.current = setTimeout(() => {
-              console.log('Retrying chat connection...');
-              setupSubscription();
-            }, retryDelay);
-            
-            toast({
-              title: 'Koneksi chat terputus',
-              description: `Mencoba menyambung kembali... (${reconnectAttempts.current}/${maxReconnectAttempts})`,
-              variant: 'destructive',
-            });
-          } else {
-            console.error('Max reconnection attempts reached');
-            toast({
-              title: 'Koneksi chat gagal',
-              description: 'Tidak dapat menyambung ke chat. Silakan refresh halaman.',
-              variant: 'destructive',
-            });
-          }
-        } else if (status === 'TIMED_OUT') {
-          console.warn('Chat subscription timed out');
-          setIsConnected(false);
-          // Trigger reconnection
-          setupSubscription();
-        }
-      });
-
-    channelRef.current = channel;
-  }, [sessionId, handleNewMessage, toast, startHeartbeat, handleTypingStart, handleTypingStop]);
-
-  // Force refresh subscription
-  const refreshConnection = useCallback(() => {
-    console.log('Manually refreshing chat connection...');
-    reconnectAttempts.current = 0;
-    setupSubscription();
-  }, [setupSubscription]);
-
-  useEffect(() => {
-    if (sessionId) {
-      loadMessages(sessionId);
-      setupSubscription();
-    } else {
-      setLoading(false);
-    }
-
-    return () => {
-      console.log('Cleaning up chat subscription');
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
-      if (heartbeatRef.current) {
-        clearInterval(heartbeatRef.current);
-      }
-      // Clear all optimistic timeouts
-      optimisticTimeouts.current.forEach(timeout => clearTimeout(timeout));
-      optimisticTimeouts.current.clear();
-    };
-  }, [sessionId, setupSubscription]);
-
-  const loadMessages = async (id: string) => {
+  const loadMessages = useCallback(async (id: string, isPolling = false) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (!isPolling) {
+        setLoading(true);
+        setError(null);
+      }
 
-      console.log(`Loading messages for session: ${id}`);
+      if (!isPolling) console.log(`📥 Loading messages for session: ${id}`);
 
       const { data, error: messagesError } = await supabase
         .from('chat_messages')
@@ -311,20 +56,297 @@ export const useSupabaseChat = (sessionId?: string) => {
         mentions: msg.mentions
       }));
 
-      console.log(`Loaded ${transformedMessages.length} messages`);
+      // If polling and we have new messages, show them
+      if (isPolling && transformedMessages.length > lastMessageCountRef.current) {
+        console.log(`🔄 Polling detected ${transformedMessages.length - lastMessageCountRef.current} new messages`);
+        
+        // Show toast for new messages
+        const newMessages = transformedMessages.slice(lastMessageCountRef.current);
+        newMessages.forEach(msg => {
+          if (msg.senderName !== getCurrentUserName()) {
+            toast({
+              title: `💬 Pesan baru dari ${msg.senderName}`,
+              description: msg.message.length > 50 ? msg.message.substring(0, 50) + '...' : msg.message,
+              duration: 3000,
+            });
+          }
+        });
+      }
+
+      lastMessageCountRef.current = transformedMessages.length;
       setMessages(transformedMessages);
+
+      if (!isPolling) console.log(`📥 Loaded ${transformedMessages.length} messages`);
     } catch (err: any) {
       console.error('Error loading messages:', err);
-      setError(err.message);
-      toast({
-        title: 'Gagal memuat chat',
-        description: 'Terjadi kesalahan saat memuat pesan chat',
-        variant: 'destructive',
-      });
+      if (!isPolling) {
+        setError(err.message);
+        toast({
+          title: 'Gagal memuat chat',
+          description: 'Terjadi kesalahan saat memuat pesan chat',
+          variant: 'destructive',
+        });
+      }
     } finally {
+      if (!isPolling) setLoading(false);
+    }
+  }, [toast]);
+
+  // Get current user name (you'll need to pass this from component)
+  const getCurrentUserName = useCallback(() => {
+    // This is a placeholder - you'll need to get this from your app state
+    return localStorage.getItem('currentUserName') || '';
+  }, []);
+
+  // Start polling as fallback
+  const startPolling = useCallback(() => {
+    if (!sessionId) return;
+
+    console.log('🔄 Starting polling fallback (every 3 seconds)');
+    
+    pollingIntervalRef.current = setInterval(() => {
+      loadMessages(sessionId, true);
+    }, 3000); // Poll every 3 seconds
+  }, [sessionId, loadMessages]);
+
+  // Stop polling
+  const stopPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      console.log('⏹️ Stopping polling');
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  }, []);
+
+  // Function to send typing status
+  const sendTypingStatus = useCallback((username: string, isTyping: boolean) => {
+    if (!channelRef.current || !username) return;
+
+    console.log('📝 Sending typing status:', { username, isTyping });
+    
+    channelRef.current.send({
+      type: 'broadcast',
+      event: isTyping ? 'typing_start' : 'typing_stop',
+      payload: { username, timestamp: Date.now() }
+    });
+  }, []);
+
+  // Memoize the message handler
+  const handleNewMessage = useCallback((payload: any) => {
+    console.log('🔥 REALTIME MESSAGE RECEIVED:', payload);
+    
+    const newMessage: ChatMessage = {
+      id: payload.new.message_id,
+      senderName: payload.new.sender_name,
+      message: payload.new.message,
+      timestamp: payload.new.created_at,
+      mentions: payload.new.mentions
+    };
+    
+    console.log('✅ Processed new message:', newMessage);
+    
+    setMessages(prev => {
+      // Check if message already exists
+      const existingMessage = prev.find(msg => msg.id === newMessage.id);
+      
+      if (existingMessage) {
+        // Clear optimistic timeout
+        const timeout = optimisticTimeouts.current.get(newMessage.id);
+        if (timeout) {
+          clearTimeout(timeout);
+          optimisticTimeouts.current.delete(newMessage.id);
+        }
+        
+        // Replace optimistic message with real one
+        return prev.map(msg => 
+          msg.id === newMessage.id ? { ...newMessage, isOptimistic: false } : msg
+        );
+      }
+      
+      // Add new message
+      console.log('➕ Adding new message to state');
+      lastMessageCountRef.current = prev.length + 1;
+      return [...prev, newMessage];
+    });
+
+    // Reset reconnect attempts on successful message
+    reconnectAttempts.current = 0;
+  }, []);
+
+  // Handle typing events
+  const handleTypingStart = useCallback((payload: any) => {
+    const { username, timestamp } = payload;
+    console.log('⌨️ Typing start received:', { username, timestamp });
+    
+    setTypingUsers(prev => {
+      const filtered = prev.filter(user => user.username !== username);
+      return [...filtered, { username, timestamp }];
+    });
+  }, []);
+
+  const handleTypingStop = useCallback((payload: any) => {
+    const { username } = payload;
+    console.log('⌨️ Typing stop received:', { username });
+    
+    setTypingUsers(prev => prev.filter(user => user.username !== username));
+  }, []);
+
+  // Clean up old typing indicators
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers(prev => 
+        prev.filter(user => now - user.timestamp < 5000)
+      );
+    }, 1000);
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
+
+  const setupSubscription = useCallback(() => {
+    if (!sessionId) {
+      console.log('❌ No sessionId, skipping subscription setup');
+      return;
+    }
+
+    // Clean up existing subscription
+    if (channelRef.current) {
+      console.log('🧹 Cleaning up existing subscription');
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    console.log(`🚀 Setting up realtime subscription for session: ${sessionId}`);
+
+    // Test connection first
+    console.log('🔍 Testing Supabase connection...');
+    supabase
+      .from('chat_messages')
+      .select('count')
+      .eq('session_id', sessionId)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('❌ Supabase connection test failed:', error);
+        } else {
+          console.log('✅ Supabase connection test passed');
+        }
+      });
+
+    const channel = supabase
+      .channel(`chat_${sessionId}`, {
+        config: {
+          broadcast: { self: false },
+          presence: { key: sessionId },
+          private: false
+        }
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `session_id=eq.${sessionId}`
+        },
+        (payload) => {
+          console.log('🔥 REALTIME INSERT EVENT RECEIVED!');
+          console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+          handleNewMessage(payload);
+        }
+      )
+      .on('broadcast', { event: 'typing_start' }, handleTypingStart)
+      .on('broadcast', { event: 'typing_stop' }, handleTypingStop)
+      .subscribe((status) => {
+        console.log(`📡 Subscription status: ${status}`);
+        
+        switch (status) {
+          case 'SUBSCRIBED':
+            setIsConnected(true);
+            setError(null);
+            reconnectAttempts.current = 0;
+            stopPolling(); // Stop polling when realtime works
+            console.log('✅ REALTIME CONNECTED - Polling stopped');
+            console.log('🎯 Listening for INSERT events on chat_messages where session_id =', sessionId);
+            
+            toast({
+              title: '✅ Chat Realtime Aktif',
+              description: 'Pesan akan muncul secara realtime',
+              duration: 2000,
+            });
+            break;
+            
+          case 'CHANNEL_ERROR':
+            setIsConnected(false);
+            console.error('❌ Realtime failed, starting polling fallback');
+            startPolling(); // Start polling as fallback
+            
+            if (reconnectAttempts.current < maxReconnectAttempts) {
+              reconnectAttempts.current++;
+              const retryDelay = 2000 * reconnectAttempts.current;
+              
+              console.log(`🔄 Retrying realtime in ${retryDelay}ms`);
+              retryTimeoutRef.current = setTimeout(setupSubscription, retryDelay);
+            } else {
+              toast({
+                title: '⚠️ Menggunakan Mode Polling',
+                description: 'Pesan akan diperbarui setiap 3 detik',
+                variant: 'default',
+              });
+            }
+            break;
+            
+          case 'CLOSED':
+            setIsConnected(false);
+            console.warn('⚠️ Realtime connection closed, starting polling');
+            startPolling();
+            break;
+            
+          case 'TIMED_OUT':
+            setIsConnected(false);
+            console.warn('⏰ Realtime timeout, starting polling');
+            startPolling();
+            setTimeout(setupSubscription, 5000);
+            break;
+            
+          default:
+            console.log(`🔄 Subscription status: ${status}`);
+        }
+      });
+
+    channelRef.current = channel;
+    console.log('📡 Channel created and stored');
+  }, [sessionId, handleNewMessage, handleTypingStart, handleTypingStop, toast, startPolling, stopPolling]);
+
+  // Force refresh subscription
+  const refreshConnection = useCallback(() => {
+    console.log('🔄 Manually refreshing connection...');
+    reconnectAttempts.current = 0;
+    stopPolling();
+    setupSubscription();
+  }, [setupSubscription, stopPolling]);
+
+  useEffect(() => {
+    if (sessionId) {
+      console.log('🚀 Initializing chat for session:', sessionId);
+      loadMessages(sessionId);
+      setupSubscription();
+    } else {
       setLoading(false);
     }
-  };
+
+    return () => {
+      console.log('🧹 Cleaning up chat');
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+      stopPolling();
+      optimisticTimeouts.current.forEach(timeout => clearTimeout(timeout));
+      optimisticTimeouts.current.clear();
+    };
+  }, [sessionId, loadMessages, setupSubscription, stopPolling]);
 
   const sendMessage = async (senderName: string, message: string, mentions?: string[]) => {
     if (!sessionId) {

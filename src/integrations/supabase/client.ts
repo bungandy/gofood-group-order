@@ -16,10 +16,13 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
   realtime: {
     params: {
-      eventsPerSecond: 20,
+      eventsPerSecond: 50,
     },
-    heartbeatIntervalMs: 30000,
-    reconnectAfterMs: (tries: number) => Math.min(tries * 1000, 30000),
+    heartbeatIntervalMs: 15000,
+    reconnectAfterMs: (tries: number) => Math.min(tries * 1000, 10000),
+    logger: (level, message, details) => {
+      console.log(`[Supabase Realtime ${level}]`, message, details);
+    },
   },
   global: {
     headers: {
