@@ -14,6 +14,7 @@ interface ChatMessage {
   message: string;
   timestamp: string;
   mentions?: string[];
+  isOptimistic?: boolean;
 }
 
 interface Order {
@@ -34,25 +35,75 @@ interface GroupChatProps {
 export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [showMentions, setShowMentions] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Supabase hook for chat functionality
-  const { messages, sendMessage, loading } = useSupabaseChat(sessionId);
+  const { messages, sendMessage, loading, isConnected } = useSupabaseChat(sessionId);
 
   // Get all unique customer names for mentions
   const availableUsers = Array.from(new Set(orders.map(order => order.customerName)));
 
+  // Function to scroll to bottom
+  const scrollToBottom = () => {
+    // Only scroll the container directly, don't use scrollIntoView to avoid page scroll
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current;
+      // Try multiple methods to ensure scroll works
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      
+      // Also try to find the viewport element inside ScrollArea
+      const viewport = scrollContainer.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    }
+  };
+
   useEffect(() => {
     // Auto scroll to bottom when new messages arrive
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
+    // Immediate scroll without animation to avoid page scroll
+    scrollToBottom();
+    
+    // Additional scroll after a short delay for any rendering delays
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [messages]);
 
+  // Separate effect for notification sound to avoid interference with scrolling
+  useEffect(() => {
+    // Play notification sound for new messages from other users
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.senderName !== currentUserName && !lastMessage.isOptimistic) {
+        // Simple notification sound using Web Audio API
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (error) {
+          // Ignore audio errors
+          console.log('Audio notification not available');
+        }
+      }
+    }
+  }, [messages, currentUserName]);
+
   const sendChatMessage = async () => {
-    if (!newMessage.trim() || !currentUserName) {
+    if (!newMessage.trim() || !currentUserName || isSending) {
       if (!currentUserName) {
         toast({
           title: "Isi nama terlebih dahulu",
@@ -63,6 +114,8 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
       return;
     }
 
+    console.log('Starting to send message:', { newMessage, currentUserName, isSending });
+
     // Extract mentions from message
     const mentionRegex = /@(\w+)/g;
     const mentions = [];
@@ -71,18 +124,33 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
       mentions.push(match[1]);
     }
 
+    setIsSending(true);
+    const messageToSend = newMessage;
+    setNewMessage(""); // Clear input immediately for better UX
+    setShowMentions(false);
+
+    // Scroll to bottom immediately after adding optimistic message
+    setTimeout(scrollToBottom, 50);
+
+    console.log('About to call sendMessage hook');
+
     try {
       await sendMessage(
         currentUserName, 
-        newMessage, 
+        messageToSend, 
         mentions.length > 0 ? mentions : undefined
       );
+      console.log('sendMessage completed successfully');
       
-      setNewMessage("");
-      setShowMentions(false);
+      // Scroll to bottom after sending message
+      setTimeout(scrollToBottom, 100);
     } catch (error) {
-      // Error handling is done in the hook
-      console.error('Failed to send message:', error);
+      console.error('sendMessage failed:', error);
+      // Restore message on error
+      setNewMessage(messageToSend);
+    } finally {
+      console.log('Setting isSending to false');
+      setIsSending(false);
     }
   };
 
@@ -140,14 +208,17 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
 
     const isCurrentUser = message.senderName === currentUserName;
     const isMentioned = message.mentions?.includes(currentUserName);
+    const isOptimistic = message.isOptimistic;
 
     return (
       <div
         key={message.id}
-        className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-3`}
+        className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-3 ${
+          isOptimistic ? "opacity-70" : ""
+        }`}
       >
         <div
-          className={`max-w-[70%] rounded-lg px-3 py-2 ${
+          className={`max-w-[70%] rounded-lg px-3 py-2 relative ${
             isCurrentUser
               ? "bg-primary text-primary-foreground"
               : isMentioned
@@ -164,11 +235,14 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
             className="text-sm"
             dangerouslySetInnerHTML={{ __html: messageContent }}
           />
-          <div className="text-xs opacity-70 mt-1">
+          <div className="text-xs opacity-70 mt-1 flex items-center gap-1">
             {new Date(message.timestamp).toLocaleTimeString("id-ID", {
               hour: "2-digit",
               minute: "2-digit",
             })}
+            {isOptimistic && (
+              <span className="text-xs">⏳</span>
+            )}
           </div>
         </div>
       </div>
@@ -186,6 +260,12 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
               {messages.length}
             </Badge>
           )}
+          <div className="ml-auto flex items-center gap-1">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span className="text-xs text-muted-foreground">
+              {isConnected ? 'Online' : 'Offline'}
+            </span>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -233,15 +313,19 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
             value={newMessage}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
-            disabled={!currentUserName}
+            disabled={!currentUserName || isSending}
             className="flex-1"
           />
           <Button
             onClick={sendChatMessage}
-            disabled={!newMessage.trim() || !currentUserName || loading}
+            disabled={!newMessage.trim() || !currentUserName || loading || isSending}
             size="sm"
           >
-            <Send className="w-4 h-4" />
+            {isSending ? (
+              <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </Button>
         </div>
 

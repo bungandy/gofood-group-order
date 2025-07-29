@@ -42,33 +42,98 @@ export const useSupabaseSession = (sessionId?: string) => {
 
       if (sessionError) {
         if (sessionError.code === 'PGRST116') {
-          // Session not found, create mock data for development
-          setSessionData({
-            sessionId: id,
-            sessionName: 'Grup Order - Demo Session',
-            merchants: [
+          // Session not found, create it in database
+          console.log('Session not found, creating new session in database:', id);
+          
+          try {
+            // Create session in database
+            const { error: createSessionError } = await supabase
+              .from('sessions')
+              .insert({
+                session_id: id,
+                session_name: 'Grup Order - Demo Session'
+              });
+
+            if (createSessionError) {
+              console.error('Failed to create session:', createSessionError);
+              throw createSessionError;
+            }
+
+            // Create mock merchants for this session
+            const mockMerchants = [
               {
-                id: 'merchant_1',
+                session_id: id,
+                merchant_id: 'merchant_1',
                 name: 'Warung Gudeg Bu Sari',
                 link: 'https://gofood.co.id/warung-gudeg'
               },
               {
-                id: 'merchant_2', 
+                session_id: id,
+                merchant_id: 'merchant_2', 
                 name: 'Ayam Geprek Bensu',
                 link: 'https://gofood.co.id/ayam-geprek'
               },
               {
-                id: 'merchant_3',
+                session_id: id,
+                merchant_id: 'merchant_3',
                 name: 'Bakso Solo Samrat',
                 link: 'https://gofood.co.id/bakso-solo'
               }
-            ]
-          });
+            ];
+
+            const { error: merchantsError } = await supabase
+              .from('merchants')
+              .insert(mockMerchants);
+
+            if (merchantsError) {
+              console.error('Failed to create merchants:', merchantsError);
+              // Don't throw here, we can continue without merchants
+            }
+
+            // Set session data
+            setSessionData({
+              sessionId: id,
+              sessionName: 'Grup Order - Demo Session',
+              merchants: mockMerchants.map(m => ({
+                id: m.merchant_id,
+                name: m.name,
+                link: m.link
+              }))
+            });
+
+            console.log('Successfully created session and merchants in database');
+            return;
+          } catch (createError) {
+            console.error('Error creating session in database:', createError);
+            // Fall back to mock data if database creation fails
+            setSessionData({
+              sessionId: id,
+              sessionName: 'Grup Order - Demo Session',
+              merchants: [
+                {
+                  id: 'merchant_1',
+                  name: 'Warung Gudeg Bu Sari',
+                  link: 'https://gofood.co.id/warung-gudeg'
+                },
+                {
+                  id: 'merchant_2', 
+                  name: 'Ayam Geprek Bensu',
+                  link: 'https://gofood.co.id/ayam-geprek'
+                },
+                {
+                  id: 'merchant_3',
+                  name: 'Bakso Solo Samrat',
+                  link: 'https://gofood.co.id/bakso-solo'
+                }
+              ]
+            });
+            return;
+          }
         } else {
           throw sessionError;
         }
       } else {
-        // Get merchants for this session
+        // Session found, get merchants for this session
         const { data: merchants, error: merchantsError } = await supabase
           .from('merchants')
           .select('*')

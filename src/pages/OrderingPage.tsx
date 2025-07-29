@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,12 +48,20 @@ const OrderingPage: React.FC = () => {
     loadOrderForEdit,
     resetForm,
     validateForm,
-    getFormData
+    getFormData,
+    initializeUserName
   } = useOrderForm();
 
   // Get merchants and session name from Supabase data
   const merchants = useMemo(() => sessionData?.merchants || [], [sessionData?.merchants]);
   const sessionName = useMemo(() => sessionData?.sessionName || "Grup Order Session", [sessionData?.sessionName]);
+
+  // Auto-initialize user name from existing orders
+  useEffect(() => {
+    if (orders.length > 0) {
+      initializeUserName(orders);
+    }
+  }, [orders, initializeUserName]);
 
   const handleSubmitOrder = async () => {
     if (!validateForm(cart)) return;

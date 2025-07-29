@@ -55,7 +55,7 @@ const Index = () => {
 
       toast({
         title: "Sesi berhasil dibuat!",
-        description: `Session ID: ${sessionId}`,
+        // description: `Session ID: ${sessionId}`,
       });
 
       // Navigate to ordering page

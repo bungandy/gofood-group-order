@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { MenuItem, Merchant } from '@/types';
-import { MenuService } from '@/services/menuService';
+import { MenuService, type MenuCategory } from '@/services/menuService';
 import { MenuItemCard } from './MenuItemCard';
 import { UI_CONFIG } from '@/constants';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -24,7 +24,8 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
   onRemoveFromCart
 }) => {
   const [expandedMerchants, setExpandedMerchants] = useState<Set<string>>(new Set());
-  const [merchantMenus, setMerchantMenus] = useState<Record<string, MenuItem[]>>({});
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [merchantMenus, setMerchantMenus] = useState<Record<string, MenuCategory[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,6 +62,18 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
     });
   };
 
+  const toggleCategoryExpansion = (categoryKey: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryKey)) {
+        newSet.delete(categoryKey);
+      } else {
+        newSet.add(categoryKey);
+      }
+      return newSet;
+    });
+  };
+
   if (loading) {
     return (
       <Card className="bg-white/80 backdrop-blur-sm">
@@ -89,13 +102,11 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
   return (
     <div className="space-y-6">
       {merchants.map((merchant, index) => {
-        const menuItems = merchantMenus[merchant.id] || [];
+        const menuCategories = merchantMenus[merchant.id] || [];
         const isExpanded = expandedMerchants.has(merchant.id);
-        const shouldShowExpansion = merchants.length > 1 && menuItems.length > UI_CONFIG.MERCHANT_EXPANSION_THRESHOLD;
-        const visibleItems = shouldShowExpansion && !isExpanded 
-          ? menuItems.slice(0, UI_CONFIG.MAX_VISIBLE_ITEMS)
-          : menuItems;
-
+        const totalItems = menuCategories.reduce((sum, category) => sum + category.items.length, 0);
+        const shouldShowExpansion = totalItems > UI_CONFIG.MERCHANT_EXPANSION_THRESHOLD;
+        
         return (
           <Card key={merchant.id} className="bg-white/80 backdrop-blur-sm animate-fade-in">
             <CardHeader className="pb-4">
@@ -127,39 +138,88 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
               </div>
               
               <CardDescription>
-                {menuItems.length > 0 ? `${menuItems.length} menu tersedia` : 'Menu belum tersedia'}
+                {menuCategories.length > 0 ? 
+                  `${menuCategories.length} kategori, ${totalItems} menu tersedia` : 
+                  'Menu belum tersedia'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {menuItems.length === 0 ? (
+              {menuCategories.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   <p>Menu untuk merchant ini belum tersedia.</p>
                   <p className="text-sm mt-2">Data menu akan dimuat otomatis setelah merchant menambahkan link GoFood.</p>
                 </div>
               ) : (
-                <div className="relative">
-                  <div className="grid gap-3">
-                    {visibleItems.map(item => (
-                      <MenuItemCard
-                        key={item.id}
-                        item={item}
-                        quantity={getItemQuantity(item.id)}
-                        onAdd={() => onAddToCart(item)}
-                        onRemove={() => onRemoveFromCart(item.id)}
-                      />
-                    ))}
-                  </div>
+                <div className="space-y-6">
+                  {menuCategories.map((category, categoryIndex) => {
+                    const categoryKey = `${merchant.id}-${categoryIndex}`;
+                    const isCategoryExpanded = expandedCategories.has(categoryKey);
+                    const shouldShowCategoryExpansion = category.items.length > UI_CONFIG.MAX_VISIBLE_ITEMS;
+                    const visibleItems = shouldShowCategoryExpansion && !isCategoryExpanded 
+                      ? category.items.slice(0, UI_CONFIG.MAX_VISIBLE_ITEMS)
+                      : category.items;
+
+                    // Don't show collapsed categories when merchant is collapsed
+                    if (shouldShowExpansion && !isExpanded && categoryIndex >= 1) {
+                      return null;
+                    }
+
+                    return (
+                      <div key={categoryKey} className="space-y-3">
+                        {/* Category Title */}
+                        <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                          <h3 className="text-lg font-semibold text-gray-800">{category.title}</h3>
+                          {shouldShowCategoryExpansion && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleCategoryExpansion(categoryKey)}
+                              className="text-xs text-muted-foreground hover:text-primary"
+                            >
+                              {isCategoryExpanded ? (
+                                <>
+                                  <ChevronUp className="w-3 h-3 mr-1" />
+                                  Sembunyikan
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-3 h-3 mr-1" />
+                                  Lihat Semua ({category.items.length})
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Category Items */}
+                        <div className="relative">
+                          <div className="grid gap-3">
+                            {visibleItems.map(item => (
+                              <MenuItemCard
+                                key={item.id}
+                                item={item}
+                                quantity={getItemQuantity(item.id)}
+                                onAdd={() => onAddToCart(item)}
+                                onRemove={() => onRemoveFromCart(item.id)}
+                              />
+                            ))}
+                          </div>
+                          
+                          {/* Gradient fade effect when category is collapsed */}
+                          {shouldShowCategoryExpansion && !isCategoryExpanded && (
+                            <div className="relative">
+                              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                   
-                  {/* Gradient fade effect when collapsed */}
-                  {shouldShowExpansion && !isExpanded && (
-                    <div className="relative">
-                      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
-                    </div>
-                  )}
-                  
-                  {/* Expand/Collapse Button - Hide on mobile when header button is available */}
+                  {/* Merchant Expand/Collapse Button */}
                   {shouldShowExpansion && (
-                    <div className="flex justify-center mt-4">
+                    <div className="flex justify-center mt-6 pt-4 border-t border-gray-100">
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -174,7 +234,7 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
                         ) : (
                           <>
                             <ChevronDown className="w-4 h-4 mr-1" />
-                            Tampilkan Semua ({menuItems.length - UI_CONFIG.MAX_VISIBLE_ITEMS} lainnya)
+                            Tampilkan Semua Kategori ({menuCategories.length - 1} lainnya)
                           </>
                         )}
                       </Button>

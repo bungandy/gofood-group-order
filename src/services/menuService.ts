@@ -1,11 +1,17 @@
 import type { MenuItem, Merchant, GofoodMerchantData, GofoodMenuItem } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
+// Add new interface for grouped menu items
+export interface MenuCategory {
+  title: string;
+  items: MenuItem[];
+}
+
 export class MenuService {
   /**
-   * Get merchant data from Supabase including menu items
+   * Get merchant data from Supabase including menu items grouped by categories
    */
-  static async getMerchantData(sessionId: string): Promise<{ merchants: Merchant[], menuData: Record<string, MenuItem[]> }> {
+  static async getMerchantData(sessionId: string): Promise<{ merchants: Merchant[], menuData: Record<string, MenuCategory[]> }> {
     try {
       const { data: merchants, error } = await supabase
         .from('merchants')
@@ -15,7 +21,7 @@ export class MenuService {
       if (error) throw error;
 
       const merchantsData: Merchant[] = [];
-      const menuData: Record<string, MenuItem[]> = {};
+      const menuData: Record<string, MenuCategory[]> = {};
 
       merchants?.forEach(merchant => {
         // Get merchant name from merchant_data if available, fallback to merchants.name
@@ -37,8 +43,8 @@ export class MenuService {
         // Process menu data if available
         if (merchant.merchant_data) {
           const gofoodData = merchant.merchant_data as GofoodMerchantData;
-          const menuItems = this.convertGofoodDataToMenuItems(gofoodData, merchant.merchant_id);
-          menuData[merchant.merchant_id] = menuItems;
+          const menuCategories = this.convertGofoodDataToMenuCategories(gofoodData, merchant.merchant_id);
+          menuData[merchant.merchant_id] = menuCategories;
         } else {
           // Fallback to empty array if no merchant data
           menuData[merchant.merchant_id] = [];
@@ -54,34 +60,44 @@ export class MenuService {
   }
 
   /**
-   * Convert GoFood API data to MenuItem format
-   * Extracts menu items from data.cards[].content.items structure
+   * Convert GoFood API data to grouped MenuCategory format
+   * Groups menu items by navigation.title from data.cards structure
    */
-  private static convertGofoodDataToMenuItems(gofoodData: GofoodMerchantData, merchantId: string): MenuItem[] {
-    const menuItems: MenuItem[] = [];
+  private static convertGofoodDataToMenuCategories(gofoodData: GofoodMerchantData, merchantId: string): MenuCategory[] {
+    const menuCategories: MenuCategory[] = [];
 
     // Check if the response has the expected structure
     if (!gofoodData.success || !gofoodData.data || !gofoodData.data.cards) {
       console.warn('Invalid GoFood API response structure');
-      return menuItems;
+      return menuCategories;
     }
 
     // Iterate through all cards to find menu item lists
     gofoodData.data.cards.forEach(card => {
       // Only process cards that contain menu items
       if (card.card_template === 'GOFOOD_MENU_ITEM_LIST_V1' && card.content.items) {
-        const categoryName = card.content.title || 'Menu';
+        // Use navigation.title for category grouping, fallback to content.title
+        const categoryTitle = card.navigation?.title || card.content.title || 'Menu';
         
+        const menuItems: MenuItem[] = [];
         card.content.items.forEach(item => {
           // Convert GoFood item to our MenuItem format
-          const menuItem = this.convertGofoodItemToMenuItem(item, merchantId, categoryName);
+          const menuItem = this.convertGofoodItemToMenuItem(item, merchantId, categoryTitle);
           menuItems.push(menuItem);
         });
+
+        // Add category with its items
+        if (menuItems.length > 0) {
+          menuCategories.push({
+            title: categoryTitle,
+            items: menuItems
+          });
+        }
       }
     });
 
-    console.log(`Converted ${menuItems.length} menu items for merchant ${merchantId}`);
-    return menuItems;
+    console.log(`Converted ${menuCategories.length} menu categories for merchant ${merchantId}`);
+    return menuCategories;
   }
 
   /**
@@ -100,25 +116,34 @@ export class MenuService {
   }
 
   /**
-   * Get all menu items for given merchants (updated to work with Supabase data)
+   * Get all menu items for given merchants (updated to work with grouped categories)
    */
   static async getAllMenuItems(sessionId: string): Promise<MenuItem[]> {
     const { menuData } = await this.getMerchantData(sessionId);
     const allItems: MenuItem[] = [];
     
-    Object.values(menuData).forEach(merchantMenus => {
-      allItems.push(...merchantMenus);
+    Object.values(menuData).forEach(merchantCategories => {
+      merchantCategories.forEach(category => {
+        allItems.push(...category.items);
+      });
     });
     
     return allItems;
   }
 
   /**
-   * Get menu items for a specific merchant (updated to work with Supabase data)
+   * Get menu items for a specific merchant (updated to work with grouped categories)
    */
   static async getMenuItemsByMerchant(sessionId: string, merchantId: string): Promise<MenuItem[]> {
     const { menuData } = await this.getMerchantData(sessionId);
-    return menuData[merchantId] || [];
+    const merchantCategories = menuData[merchantId] || [];
+    const allItems: MenuItem[] = [];
+    
+    merchantCategories.forEach(category => {
+      allItems.push(...category.items);
+    });
+    
+    return allItems;
   }
 
   /**
@@ -128,8 +153,10 @@ export class MenuService {
     const { menuData } = await this.getMerchantData(sessionId);
     
     for (const merchantMenus of Object.values(menuData)) {
-      const item = merchantMenus.find(item => item.id === itemId);
-      if (item) return item;
+      for (const category of merchantMenus) {
+        const item = category.items.find(item => item.id === itemId);
+        if (item) return item;
+      }
     }
     return null;
   }
@@ -148,31 +175,21 @@ export class MenuService {
   }
 
   /**
-   * Get menu categories for a merchant (updated to work with Supabase data)
+   * Get menu categories for a merchant (updated to return navigation titles)
    */
   static async getMenuCategories(sessionId: string, merchantId: string): Promise<string[]> {
-    const items = await this.getMenuItemsByMerchant(sessionId, merchantId);
-    const categories = new Set<string>();
+    const { menuData } = await this.getMerchantData(sessionId);
+    const merchantCategories = menuData[merchantId] || [];
     
-    items.forEach(item => {
-      // Use the category from GoFood API if available, otherwise use simple categorization
-      if (item.category) {
-        categories.add(item.category);
-      } else {
-        // Fallback to simple categorization based on item name
-        if (item.name.toLowerCase().includes('es') || item.name.toLowerCase().includes('minuman')) {
-          categories.add('Minuman');
-        } else if (item.name.toLowerCase().includes('nasi') || item.name.toLowerCase().includes('gudeg')) {
-          categories.add('Makanan Utama');
-        } else if (item.name.toLowerCase().includes('sambal') || item.name.toLowerCase().includes('krecek')) {
-          categories.add('Pelengkap');
-        } else {
-          categories.add('Lainnya');
-        }
-      }
-    });
-    
-    return Array.from(categories);
+    return merchantCategories.map(category => category.title);
+  }
+
+  /**
+   * Get grouped menu categories for a merchant
+   */
+  static async getGroupedMenuCategories(sessionId: string, merchantId: string): Promise<MenuCategory[]> {
+    const { menuData } = await this.getMerchantData(sessionId);
+    return menuData[merchantId] || [];
   }
 
   /**
