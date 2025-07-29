@@ -112,7 +112,7 @@ export class GofoodApiService {
       const { error: updateError } = await supabase
         .from('merchants')
         .update({
-          merchant_data: merchantData
+          merchant_data: merchantData as any
         })
         .eq('session_id', sessionId)
         .eq('merchant_id', merchantId);

@@ -27,7 +27,7 @@ export class MenuService {
         // Get merchant name from merchant_data if available, fallback to merchants.name
         let merchantName = merchant.name; // fallback
         if (merchant.merchant_data) {
-          const gofoodData = merchant.merchant_data as GofoodMerchantData;
+          const gofoodData = merchant.merchant_data as unknown as GofoodMerchantData;
           if (gofoodData.success && gofoodData.data?.page?.restaurant_detail?.name) {
             merchantName = gofoodData.data.page.restaurant_detail.name;
           }
@@ -42,7 +42,7 @@ export class MenuService {
 
         // Process menu data if available
         if (merchant.merchant_data) {
-          const gofoodData = merchant.merchant_data as GofoodMerchantData;
+          const gofoodData = merchant.merchant_data as unknown as GofoodMerchantData;
           const menuCategories = this.convertGofoodDataToMenuCategories(gofoodData, merchant.merchant_id);
           menuData[merchant.merchant_id] = menuCategories;
         } else {

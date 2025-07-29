@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, Edit2 } from 'lucide-react';
 import type { OrderItem, Merchant } from '@/types';
 import { formatCurrency, groupOrdersByMerchant } from '@/utils';
+import { CustomerNameInput } from '@/components/ui/customer-name-input';
 
 interface OrderFormProps {
   customerName: string;
@@ -73,11 +74,9 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         {/* Customer Name Input */}
         <div className="space-y-2">
           <Label htmlFor="customer-name">Nama Pemesan</Label>
-          <Input 
-            id="customer-name" 
-            placeholder="Masukkan nama Anda" 
-            value={customerName} 
-            onChange={(e) => onCustomerNameChange(e.target.value)} 
+          <CustomerNameInput 
+            value={customerName}
+            onConfirm={onCustomerNameChange}
           />
         </div>
 
