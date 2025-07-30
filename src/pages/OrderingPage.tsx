@@ -139,38 +139,43 @@ const OrderingPage: React.FC = () => {
             Pesan menu favorit Anda!
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-col items-center justify-center gap-4 mb-6 px-2">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md sm:max-w-none">
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button 
                   onClick={handleNewOrder}
                   variant="default"
-                  className="bg-primary hover:bg-primary/90 flex-1 sm:flex-initial text-sm"
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 flex-1 sm:flex-initial text-xs sm:text-sm"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Buat Order Baru
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden xs:inline">Buat Order Baru</span>
+                  <span className="xs:hidden">Order Baru</span>
                 </Button>
                 
                 <Button 
                   onClick={handleShareLink} 
                   variant="outline" 
-                  className="bg-white/80 backdrop-blur-sm flex-1 sm:flex-initial text-sm"
+                  size="sm"
+                  className="bg-white/80 backdrop-blur-sm flex-1 sm:flex-initial text-xs sm:text-sm"
                 >
                   {copied ? (
                     <>
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                      Disalin!
+                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-green-600" />
+                      <span className="hidden xs:inline">Disalin!</span>
+                      <span className="xs:hidden">OK</span>
                     </>
                   ) : (
                     <>
-                      <Share2 className="w-4 h-4 mr-2" />
-                      Bagikan Link
+                      <Share2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="hidden xs:inline">Bagikan Link</span>
+                      <span className="xs:hidden">Share</span>
                     </>
                   )}
                 </Button>
               </div>
               
-              <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap self-center">
+              <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap">
                 <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 {orders.length} pesanan
               </Badge>
