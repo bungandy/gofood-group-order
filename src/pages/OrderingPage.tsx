@@ -140,35 +140,37 @@ const OrderingPage: React.FC = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Button 
-                onClick={handleNewOrder}
-                variant="default"
-                className="bg-primary hover:bg-primary/90 flex-1 sm:flex-initial text-sm"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Buat Order Baru
-              </Button>
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button 
+                  onClick={handleNewOrder}
+                  variant="default"
+                  className="bg-primary hover:bg-primary/90 flex-1 sm:flex-initial text-sm"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Buat Order Baru
+                </Button>
+                
+                <Button 
+                  onClick={handleShareLink} 
+                  variant="outline" 
+                  className="bg-white/80 backdrop-blur-sm flex-1 sm:flex-initial text-sm"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                      Disalin!
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Bagikan Link
+                    </>
+                  )}
+                </Button>
+              </div>
               
-              <Button 
-                onClick={handleShareLink} 
-                variant="outline" 
-                className="bg-white/80 backdrop-blur-sm flex-1 sm:flex-initial text-sm"
-              >
-                {copied ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                    Disalin!
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Bagikan Link
-                  </>
-                )}
-              </Button>
-              
-              <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap">
+              <Badge variant="secondary" className="text-xs sm:text-sm whitespace-nowrap self-center">
                 <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 {orders.length} pesanan
               </Badge>
