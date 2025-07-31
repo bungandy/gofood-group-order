@@ -60,7 +60,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   return (
     <>
       {/* Floating Toggle Button */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className={`fixed bottom-4 right-4 ${isOpen ? 'z-30' : 'z-50'}`}>
         <Button
           onClick={toggleChat}
           size="lg"
