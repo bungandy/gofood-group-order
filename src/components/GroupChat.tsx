@@ -358,7 +358,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
                 ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md"
                 : isMentioned
                 ? "bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-700 text-green-900 dark:text-green-100 rounded-2xl rounded-bl-md"
-                : "bg-muted text-foreground rounded-2xl rounded-bl-md"
+                : "bg-card text-card-foreground border border-border rounded-2xl rounded-bl-md shadow-sm"
             }`}
           >
             {/* Message tail/arrow */}
@@ -366,11 +366,9 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
               className={`absolute bottom-0 w-3 h-3 ${
                 isCurrentUser
                   ? "right-0 bg-primary transform rotate-45 translate-x-1 translate-y-1"
-                  : "left-0 bg-muted transform rotate-45 -translate-x-1 translate-y-1"
-              } ${
-                isMentioned && !isCurrentUser 
-                  ? "bg-green-100 dark:bg-green-900" 
-                  : ""
+                  : isMentioned && !isCurrentUser
+                  ? "left-0 bg-green-100 dark:bg-green-900 border-l border-b border-green-200 dark:border-green-700 transform rotate-45 -translate-x-1 translate-y-1"
+                  : "left-0 bg-card border-l border-b border-border transform rotate-45 -translate-x-1 translate-y-1"
               }`}
             />
             
