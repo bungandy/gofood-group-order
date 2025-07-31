@@ -313,6 +313,19 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
     }
   };
 
+  // Generate consistent color for sender
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500',
+      'bg-pink-500', 'bg-indigo-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   const renderMessage = (message: ChatMessage) => {
     const isCurrentUser = message.senderName === currentUserName;
     const isMentioned = message.mentions?.includes(currentUserName);
@@ -346,7 +359,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
         <div className={`flex ${isCurrentUser ? "flex-row-reverse" : "flex-row"} items-end gap-1 max-w-[85%]`}>
           {/* Avatar for other users */}
           {!isCurrentUser && (
-            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground mb-1">
+            <div className={`w-6 h-6 rounded-full ${getAvatarColor(message.senderName)} flex items-center justify-center text-xs font-medium text-white mb-1`}>
               {message.senderName.charAt(0).toUpperCase()}
             </div>
           )}
