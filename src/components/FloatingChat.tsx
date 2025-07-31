@@ -87,53 +87,43 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
 
       {/* Floating Chat Window */}
       {isOpen && (
-        <div className="fixed inset-0 z-40 lg:inset-auto lg:bottom-20 lg:right-4 lg:w-96 lg:h-[500px]">
+        <div className="fixed inset-0 z-40 lg:inset-auto lg:bottom-20 lg:right-4 lg:w-[400px] lg:h-[600px]">
           {/* Mobile overlay backdrop */}
           <div 
-            className="lg:hidden absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="lg:hidden absolute inset-0 bg-black/30 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
           
           {/* Chat container */}
-          <div className="relative h-full lg:h-auto lg:rounded-lg lg:shadow-2xl lg:border bg-background animate-in slide-in-from-bottom-4 lg:slide-in-from-right-4 duration-300">
+          <div className="relative flex flex-col h-full bg-background lg:rounded-xl lg:shadow-2xl lg:border border-border animate-in slide-in-from-bottom-4 lg:slide-in-from-right-4 duration-300 lg:overflow-hidden">
             {/* Mobile header */}
-            <div className="lg:hidden flex items-center justify-between p-4 border-b bg-background">
-              <h3 className="text-lg font-semibold">Group Chat</h3>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsOpen(false)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Minimize2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsOpen(false)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Desktop header */}
-            <div className="hidden lg:flex items-center justify-between p-3 border-b bg-background rounded-t-lg">
-              <h3 className="text-sm font-semibold">Group Chat</h3>
+            <div className="lg:hidden flex items-center justify-between p-4 border-b border-border bg-background/95 backdrop-blur-sm">
+              <h3 className="text-lg font-semibold text-foreground">Group Chat</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="h-6 w-6 p-0"
+                className="h-8 w-8 p-0 hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Desktop header */}
+            <div className="hidden lg:flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <h3 className="text-sm font-semibold text-foreground">Group Chat</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(false)}
+                className="h-6 w-6 p-0 hover:bg-muted"
               >
                 <X className="h-3 w-3" />
               </Button>
             </div>
 
             {/* Chat content */}
-            <div className="flex-1 lg:h-[440px]">
+            <div className="flex-1 overflow-hidden lg:h-[540px]">
               <GroupChat
                 sessionId={sessionId}
                 currentUserName={currentUserName}

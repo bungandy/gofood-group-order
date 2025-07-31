@@ -268,11 +268,6 @@ export const useSupabaseChat = (sessionId?: string) => {
             console.log('✅ REALTIME CONNECTED - Polling stopped');
             console.log('🎯 Listening for INSERT events on chat_messages where session_id =', sessionId);
             
-            toast({
-              title: '✅ Chat Realtime Aktif',
-              description: 'Pesan akan muncul secara realtime',
-              duration: 2000,
-            });
             break;
             
           case 'CHANNEL_ERROR':
