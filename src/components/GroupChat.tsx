@@ -529,7 +529,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
       {/* Fixed Input Area at Bottom */}
       <div className="border-t border-border bg-background p-4 space-y-3">
         {/* Message input */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Input
             ref={inputRef}
             placeholder={
@@ -541,12 +541,12 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             disabled={!currentUserName || isSending}
-            className="flex-1"
+            className="flex-1 h-10"
           />
           <Button
             onClick={sendChatMessage}
             disabled={!newMessage.trim() || !currentUserName || loading || isSending}
-            size="sm"
+            className="h-10 w-10 p-0"
           >
             {isSending ? (
               <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
