@@ -37,7 +37,6 @@ export const CustomerNameInput: React.FC<CustomerNameInputProps> = ({
         />
         <Button 
           onClick={handleConfirm}
-          size="sm"
           disabled={!localValue.trim()}
         >
           <Check className="w-4 h-4" />
@@ -57,7 +56,6 @@ export const CustomerNameInput: React.FC<CustomerNameInputProps> = ({
       <Button 
         onClick={handleEdit}
         variant="outline"
-        size="sm"
       >
         <Edit2 className="w-4 h-4" />
       </Button>
