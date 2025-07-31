@@ -272,6 +272,9 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
     const value = e.target.value;
     setNewMessage(value);
     
+    console.log("Input value:", value);
+    console.log("Available users:", availableUsers);
+    
     // Show typing indicator and send to others
     if (value.trim() && !isTyping && currentUserName) {
       setIsTyping(true);
@@ -293,21 +296,30 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
     
     // Show mentions when typing @
     const lastAtIndex = value.lastIndexOf("@");
+    console.log("Last @ index:", lastAtIndex);
+    
     if (lastAtIndex !== -1) {
       const textAfterAt = value.substring(lastAtIndex + 1);
+      console.log("Text after @:", textAfterAt);
+      console.log("Contains space:", textAfterAt.includes(" "));
+      
       if (!textAfterAt.includes(" ")) {
         // Filter users based on text after @
         const filtered = availableUsers.filter(user => 
           user.toLowerCase().includes(textAfterAt.toLowerCase())
         );
+        console.log("Filtered users:", filtered);
         setFilteredUsers(filtered);
         setSelectedMentionIndex(0);
         setShowMentions(true);
+        console.log("Setting showMentions to true");
       } else {
+        console.log("Hiding mentions - space found");
         setShowMentions(false);
         setFilteredUsers([]);
       }
     } else {
+      console.log("Hiding mentions - no @ found");
       setShowMentions(false);
       setFilteredUsers([]);
     }
