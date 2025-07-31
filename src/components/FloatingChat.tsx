@@ -96,29 +96,16 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
           
           {/* Chat container */}
           <div className="relative flex flex-col h-full bg-background lg:rounded-xl lg:shadow-2xl lg:border border-border animate-in slide-in-from-bottom-4 lg:slide-in-from-right-4 duration-300 lg:overflow-hidden">
-            {/* Mobile header */}
-            <div className="lg:hidden flex items-center justify-between p-4 border-b border-border bg-background/95 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold text-foreground">Group Chat</h3>
+            {/* Chat header - unified for mobile and desktop */}
+            <div className="flex items-center justify-between p-4 lg:px-4 lg:py-3 border-b border-border bg-background/95 backdrop-blur-sm">
+              <h3 className="text-lg lg:text-sm font-semibold text-foreground">Group Chat</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="h-8 w-8 p-0 hover:bg-muted"
+                className="h-8 w-8 lg:h-6 lg:w-6 p-0 hover:bg-muted"
               >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Desktop header */}
-            <div className="hidden lg:flex items-center justify-between px-4 py-3 border-b border-border bg-background">
-              <h3 className="text-sm font-semibold text-foreground">Group Chat</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-                className="h-6 w-6 p-0 hover:bg-muted"
-              >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4 lg:h-3 lg:w-3" />
               </Button>
             </div>
 
