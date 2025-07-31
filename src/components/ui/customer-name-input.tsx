@@ -52,7 +52,7 @@ export const CustomerNameInput: React.FC<CustomerNameInputProps> = ({
         id="customer-name" 
         value={value} 
         readOnly
-        className="cursor-default"
+        className="cursor-default opacity-60 bg-muted/50"
       />
       <Button 
         onClick={handleEdit}
