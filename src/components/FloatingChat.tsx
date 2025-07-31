@@ -128,6 +128,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                 sessionId={sessionId}
                 currentUserName={currentUserName}
                 orders={orders}
+                isChatOpen={isOpen}
               />
             </div>
           </div>

@@ -30,9 +30,10 @@ interface GroupChatProps {
   sessionId: string;
   currentUserName: string;
   orders: Order[];
+  isChatOpen?: boolean;
 }
 
-export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps) => {
+export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = false }: GroupChatProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
@@ -104,7 +105,8 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
   // Separate effect for notification sound and toast to avoid interference with scrolling
   useEffect(() => {
     // Play notification sound and show toast for new messages from other users
-    if (messages.length > 0) {
+    // Only show toast if chat modal is not open
+    if (messages.length > 0 && !isChatOpen) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.senderName !== currentUserName && !lastMessage.isOptimistic) {
         // Show toast notification for new message
@@ -137,7 +139,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
         }
       }
     }
-  }, [messages, currentUserName, toast]);
+  }, [messages, currentUserName, toast, isChatOpen]);
 
   const handleRefreshConnection = () => {
     toast({
