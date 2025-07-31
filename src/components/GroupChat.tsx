@@ -528,7 +528,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
       </div>
 
       {/* Fixed Input Area at Bottom */}
-      <div className="border-t border-border bg-background p-4 space-y-3">
+      <div className="border-t border-border bg-background px-3 py-2 space-y-2">
         {/* Message input */}
         <div className="flex gap-2 items-center">
           <Input
