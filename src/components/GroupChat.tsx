@@ -542,7 +542,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             disabled={!currentUserName || isSending}
-            className="flex-1 h-10 px-2 py-1 focus:outline-none focus:ring-0 border-input"
+            className="flex-1 h-10 px-2 py-1 focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-input focus-visible:ring-0 focus-visible:ring-offset-0 border-input"
           />
           <Button
             onClick={sendChatMessage}
