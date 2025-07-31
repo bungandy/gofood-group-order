@@ -15,8 +15,8 @@ import {
   OrderForm,
   OrderSummaryByMerchant,
   MenuSection,
-  GroupChat
 } from "@/features";
+import { FloatingChat } from "@/components/FloatingChat";
 import type { Order } from "@/types";
 import { copyToClipboard } from "@/utils";
 import { SUCCESS_MESSAGES, UI_CONFIG } from "@/constants";
@@ -220,13 +220,6 @@ const OrderingPage: React.FC = () => {
               onNotesChange={setNotes}
               onSubmit={handleSubmitOrder}
             />
-
-            {/* Group Chat */}
-            <GroupChat 
-              sessionId={sessionId || ''} 
-              currentUserName={customerName} 
-              orders={orders} 
-            />
             
             {/* Overview Button */}
             {orders.length > 0 && (
@@ -246,6 +239,14 @@ const OrderingPage: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Floating Chat */}
+      <FloatingChat
+        sessionId={sessionId || ''}
+        currentUserName={customerName}
+        orders={orders}
+      />
+      
       <Footer />
     </div>
   );
