@@ -123,7 +123,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
             </div>
 
             {/* Chat content */}
-            <div className="flex-1 overflow-hidden lg:h-[540px]">
+            <div className="flex-1 min-h-0">
               <GroupChat
                 sessionId={sessionId}
                 currentUserName={currentUserName}

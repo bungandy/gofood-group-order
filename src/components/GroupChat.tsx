@@ -373,44 +373,44 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
   };
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+    <div className="flex flex-col h-full">{/* Remove Card wrapper for cleaner floating chat layout */}
+      {/* Header - simplified for floating chat */}
+      <div className="flex items-center justify-between p-4 border-b border-border bg-background/50">
+        <div className="flex items-center gap-2">
           <MessageCircle className="w-4 h-4" />
-          Chat Grup
+          <span className="font-medium text-sm">Chat</span>
           {messages.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs h-5">
               {messages.length}
             </Badge>
           )}
-          <div className="ml-auto flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              {isConnected ? (
-                <Wifi className="w-3 h-3 text-green-500" />
-              ) : (
-                <WifiOff className="w-3 h-3 text-red-500" />
-              )}
-              <span className="text-xs text-muted-foreground">
-                {isConnected ? 'Realtime Aktif' : 'Terputus'}
-              </span>
-            </div>
-            {!isConnected && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefreshConnection}
-                className="h-6 px-2 text-xs"
-              >
-                <RefreshCw className="w-3 h-3 mr-1" />
-                Sambung
-              </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {isConnected ? (
+              <Wifi className="w-3 h-3 text-green-500" />
+            ) : (
+              <WifiOff className="w-3 h-3 text-red-500" />
             )}
+            <span className="text-xs text-muted-foreground">
+              {isConnected ? 'Online' : 'Offline'}
+            </span>
           </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Messages */}
-        <ScrollArea className="h-64 w-full pr-4" ref={scrollAreaRef}>
+          {!isConnected && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefreshConnection}
+              className="h-6 px-2 text-xs"
+            >
+              <RefreshCw className="w-3 h-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+      {/* Messages Area */}
+      <div className="flex-1 min-h-0 p-4">
+        <ScrollArea className="h-full w-full pr-2" ref={scrollAreaRef}>
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground text-sm py-8">
               Belum ada chat. Mulai percakapan!
@@ -484,7 +484,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
         )}
 
         {/* Message input */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-4">
           <Input
             ref={inputRef}
             placeholder={
@@ -512,11 +512,11 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
         </div>
 
         {availableUsers.length > 0 && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground mt-2">
             Pemesan aktif: {availableUsers.join(", ")}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
