@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, X, Minimize2 } from 'lucide-react';
+import { MessageCircle, X, Minimize2, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GroupChat } from '@/components/GroupChat';
+import { useSupabaseChat } from '@/hooks/useSupabaseChat';
 import { Order } from '@/types';
 
 interface FloatingChatProps {
@@ -18,6 +19,9 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasNewMessages, setHasNewMessages] = useState(false);
+  
+  // Get chat data directly in FloatingChat
+  const { messages, isConnected, refreshConnection } = useSupabaseChat(sessionId);
 
   // Load saved state from localStorage
   useEffect(() => {
@@ -98,15 +102,45 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
           <div className="relative flex flex-col h-full bg-background lg:rounded-xl lg:shadow-2xl lg:border border-border animate-in slide-in-from-bottom-4 lg:slide-in-from-right-4 duration-300 lg:overflow-hidden">
             {/* Chat header - unified for mobile and desktop */}
             <div className="flex items-center justify-between p-4 lg:px-4 lg:py-3 border-b border-border bg-background/95 backdrop-blur-sm">
-              <h3 className="text-lg lg:text-sm font-semibold text-foreground">Group Chat</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-                className="h-8 w-8 lg:h-6 lg:w-6 p-0 hover:bg-muted"
-              >
-                <X className="h-4 w-4 lg:h-3 lg:w-3" />
-              </Button>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <h3 className="text-lg lg:text-sm font-semibold text-foreground">Group Chat</h3>
+                {messages.length > 0 && (
+                  <Badge variant="secondary" className="text-xs h-5 px-2 flex-shrink-0">
+                    {messages.length}
+                  </Badge>
+                )}
+                <div className="flex items-center gap-1.5 ml-2">
+                  {isConnected ? (
+                    <Wifi className="w-3.5 h-3.5 text-green-500" />
+                  ) : (
+                    <WifiOff className="w-3.5 h-3.5 text-red-500" />
+                  )}
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {isConnected ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {!isConnected && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={refreshConnection}
+                    className="h-7 w-7 p-0 flex-shrink-0"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  className="h-8 w-8 lg:h-6 lg:w-6 p-0 hover:bg-muted"
+                >
+                  <X className="h-4 w-4 lg:h-3 lg:w-3" />
+                </Button>
+              </div>
             </div>
 
             {/* Chat content */}
@@ -116,6 +150,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                 currentUserName={currentUserName}
                 orders={orders}
                 isChatOpen={isOpen}
+                hideHeader={true}
               />
             </div>
           </div>

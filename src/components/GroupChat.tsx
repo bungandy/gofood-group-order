@@ -31,9 +31,10 @@ interface GroupChatProps {
   currentUserName: string;
   orders: Order[];
   isChatOpen?: boolean;
+  hideHeader?: boolean;
 }
 
-export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = false }: GroupChatProps) => {
+export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = false, hideHeader = false }: GroupChatProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
@@ -411,42 +412,44 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
   };
 
   return (
-    <div className="flex flex-col h-full">{/* Remove Card wrapper for cleaner floating chat layout */}
-      {/* Header - simplified for floating chat */}
-      <div className="flex items-center justify-between p-3 border-b border-border bg-background/50 min-h-[60px]">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <MessageCircle className="w-4 h-4 flex-shrink-0" />
-          <span className="font-medium text-sm flex-shrink-0">Chat</span>
-          {messages.length > 0 && (
-            <Badge variant="secondary" className="text-xs h-5 px-2 flex-shrink-0">
-              {messages.length}
-            </Badge>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="flex items-center gap-1.5">
-            {isConnected ? (
-              <Wifi className="w-3.5 h-3.5 text-green-500" />
-            ) : (
-              <WifiOff className="w-3.5 h-3.5 text-red-500" />
+    <div className="flex flex-col h-full">
+      {/* Conditional Header */}
+      {!hideHeader && (
+        <div className="flex items-center justify-between p-3 border-b border-border bg-background/50 min-h-[60px]">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <MessageCircle className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium text-sm flex-shrink-0">Chat</span>
+            {messages.length > 0 && (
+              <Badge variant="secondary" className="text-xs h-5 px-2 flex-shrink-0">
+                {messages.length}
+              </Badge>
             )}
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {isConnected ? 'Online' : 'Offline'}
-            </span>
           </div>
-          {!isConnected && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefreshConnection}
-              className="h-7 w-7 p-0 flex-shrink-0"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </Button>
-          )}
+          
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-1.5">
+              {isConnected ? (
+                <Wifi className="w-3.5 h-3.5 text-green-500" />
+              ) : (
+                <WifiOff className="w-3.5 h-3.5 text-red-500" />
+              )}
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {isConnected ? 'Online' : 'Offline'}
+              </span>
+            </div>
+            {!isConnected && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefreshConnection}
+                className="h-7 w-7 p-0 flex-shrink-0"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       {/* Messages Area */}
       <div className="flex-1 min-h-0 px-4 pt-4">
         <ScrollArea className="h-full w-full pr-2" ref={scrollAreaRef}>
