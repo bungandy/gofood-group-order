@@ -336,36 +336,72 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     return (
       <div
         key={message.id}
-        className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-3 ${
+        className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-2 ${
           isOptimistic ? "opacity-70" : ""
         }`}
       >
-        <div
-          className={`max-w-[70%] rounded-lg px-3 py-2 relative ${
-            isCurrentUser
-              ? "bg-primary text-primary-foreground"
-              : isMentioned
-              ? "bg-green-50 border border-green-300 dark:bg-green-950 dark:border-green-700"
-              : "bg-muted"
-          }`}
-        >
+        <div className={`flex ${isCurrentUser ? "flex-row-reverse" : "flex-row"} items-end gap-1 max-w-[85%]`}>
+          {/* Avatar for other users */}
           {!isCurrentUser && (
-            <div className="text-xs font-medium mb-1 text-muted-foreground">
-              {message.senderName}
+            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground mb-1">
+              {message.senderName.charAt(0).toUpperCase()}
             </div>
           )}
+          
+          {/* Message bubble with tail */}
           <div
-            className="text-sm"
-            dangerouslySetInnerHTML={{ __html: messageContent }}
-          />
-          <div className="text-xs opacity-70 mt-1 flex items-center gap-1">
-            {new Date(message.timestamp).toLocaleTimeString("id-ID", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-            {isOptimistic && (
-              <span className="text-xs">⏳</span>
+            className={`relative px-3 py-2 max-w-[280px] break-words ${
+              isCurrentUser
+                ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md"
+                : isMentioned
+                ? "bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-700 text-green-900 dark:text-green-100 rounded-2xl rounded-bl-md"
+                : "bg-muted text-foreground rounded-2xl rounded-bl-md"
+            }`}
+          >
+            {/* Message tail/arrow */}
+            <div
+              className={`absolute bottom-0 w-3 h-3 ${
+                isCurrentUser
+                  ? "right-0 bg-primary transform rotate-45 translate-x-1 translate-y-1"
+                  : "left-0 bg-muted transform rotate-45 -translate-x-1 translate-y-1"
+              } ${
+                isMentioned && !isCurrentUser 
+                  ? "bg-green-100 dark:bg-green-900" 
+                  : ""
+              }`}
+            />
+            
+            {/* Sender name for other users */}
+            {!isCurrentUser && (
+              <div className="text-xs font-semibold mb-1 opacity-80">
+                {message.senderName}
+              </div>
             )}
+            
+            {/* Message content */}
+            <div
+              className={`text-sm leading-relaxed ${isCurrentUser ? "text-primary-foreground" : ""}`}
+              dangerouslySetInnerHTML={{ __html: messageContent }}
+            />
+            
+            {/* Timestamp */}
+            <div className={`text-xs mt-1 flex items-center gap-1 ${
+              isCurrentUser 
+                ? "text-primary-foreground/70 justify-end" 
+                : "text-muted-foreground justify-start"
+            }`}>
+              <span>
+                {new Date(message.timestamp).toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              {isCurrentUser && (
+                <span className="text-xs">
+                  {isOptimistic ? "⏳" : "✓"}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
