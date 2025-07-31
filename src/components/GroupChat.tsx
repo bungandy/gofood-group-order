@@ -302,17 +302,25 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
       const textAfterAt = value.substring(lastAtIndex + 1);
       console.log("Text after @:", textAfterAt);
       console.log("Contains space:", textAfterAt.includes(" "));
+      console.log("Available users before filter:", availableUsers);
       
       if (!textAfterAt.includes(" ")) {
-        // Filter users based on text after @
+        // Filter users based on text after @ (empty string matches all)
         const filtered = availableUsers.filter(user => 
           user.toLowerCase().includes(textAfterAt.toLowerCase())
         );
         console.log("Filtered users:", filtered);
-        setFilteredUsers(filtered);
-        setSelectedMentionIndex(0);
-        setShowMentions(true);
-        console.log("Setting showMentions to true");
+        
+        if (filtered.length > 0) {
+          setFilteredUsers(filtered);
+          setSelectedMentionIndex(0);
+          setShowMentions(true);
+          console.log("Setting showMentions to true, filtered count:", filtered.length);
+        } else {
+          console.log("No filtered users found");
+          setShowMentions(false);
+          setFilteredUsers([]);
+        }
       } else {
         console.log("Hiding mentions - space found");
         setShowMentions(false);
