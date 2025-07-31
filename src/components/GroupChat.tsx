@@ -521,7 +521,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
       </div>
 
       {/* Fixed Input Area at Bottom */}
-      <div className="border-t border-border bg-background p-4 space-y-3">
+      <div className="border-t border-border bg-background p-4 pb-20 lg:pb-4 space-y-3">{/* Add extra bottom padding on mobile for floating button */}
         {/* Message input */}
         <div className="flex gap-2">
           <Input
