@@ -33,30 +33,6 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
     localStorage.setItem('floating-chat-state', JSON.stringify({ isOpen }));
   }, [isOpen]);
 
-  // Handle Safari mobile viewport and keyboard issues
-  useEffect(() => {
-    const setVh = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    };
-
-    // Set initial value
-    setVh();
-
-    // Update on resize (including keyboard open/close)
-    const handleResize = () => {
-      setVh();
-    };
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
-  }, []);
-
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -111,7 +87,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
 
       {/* Floating Chat Window */}
       {isOpen && (
-        <div className="fixed inset-0 z-40 lg:inset-auto lg:bottom-20 lg:right-4 lg:w-[400px] lg:h-[600px]" style={{ height: 'var(--vh, 100vh)' }}>
+        <div className="fixed inset-0 z-40 lg:inset-auto lg:bottom-20 lg:right-4 lg:w-[400px] lg:h-[600px]">
           {/* Mobile overlay backdrop */}
           <div 
             className="lg:hidden absolute inset-0 bg-black/30 backdrop-blur-sm"
@@ -119,7 +95,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
           />
           
           {/* Chat container */}
-          <div className="relative flex flex-col h-full bg-background lg:rounded-xl lg:shadow-2xl lg:border border-border animate-in slide-in-from-bottom-4 lg:slide-in-from-right-4 duration-300 lg:overflow-hidden safe-area-bottom">{/* Add safe-area class for mobile keyboards */}
+          <div className="relative flex flex-col h-full bg-background lg:rounded-xl lg:shadow-2xl lg:border border-border animate-in slide-in-from-bottom-4 lg:slide-in-from-right-4 duration-300 lg:overflow-hidden">
             {/* Mobile header */}
             <div className="lg:hidden flex items-center justify-between p-4 border-b border-border bg-background/95 backdrop-blur-sm">
               <h3 className="text-lg font-semibold text-foreground">Group Chat</h3>
