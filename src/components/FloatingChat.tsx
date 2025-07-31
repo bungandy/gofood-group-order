@@ -136,7 +136,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsOpen(false)}
-                  className="h-8 w-8 lg:h-6 lg:w-6 p-0 hover:bg-muted"
+                  className="h-8 w-8 lg:h-6 lg:w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
                 >
                   <X className="h-4 w-4 lg:h-3 lg:w-3" />
                 </Button>
