@@ -197,6 +197,16 @@ const OrderingPage: React.FC = () => {
 
           {/* Order Form & Summary */}
           <div className="space-y-6">
+            <OrderSummaryByMerchant 
+              orders={orders} 
+              merchants={merchants} 
+              onEditOrder={handleEditOrder} 
+              onDeleteOrder={handleDeleteOrder} 
+              compact={true}
+              isConnected={ordersConnected}
+              onRefreshConnection={refreshOrdersConnection}
+            />
+
             <OrderForm
               customerName={customerName}
               notes={notes}
@@ -209,16 +219,6 @@ const OrderingPage: React.FC = () => {
               onCustomerNameChange={setCustomerName}
               onNotesChange={setNotes}
               onSubmit={handleSubmitOrder}
-            />
-
-            <OrderSummaryByMerchant 
-              orders={orders} 
-              merchants={merchants} 
-              onEditOrder={handleEditOrder} 
-              onDeleteOrder={handleDeleteOrder} 
-              compact={true}
-              isConnected={ordersConnected}
-              onRefreshConnection={refreshOrdersConnection}
             />
 
             {/* Group Chat */}
