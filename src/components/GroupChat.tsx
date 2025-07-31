@@ -343,10 +343,10 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
           isOptimistic ? "opacity-70" : ""
         }`}
       >
-        <div className={`flex ${isCurrentUser ? "flex-row-reverse" : "flex-row"} items-end gap-1 max-w-[85%]`}>
+        <div className={`flex ${isCurrentUser ? "flex-row-reverse" : "flex-row"} items-end gap-2 max-w-[85%]`}>
           {/* Avatar for other users */}
           {!isCurrentUser && (
-            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground mb-1">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0">
               {message.senderName.charAt(0).toUpperCase()}
             </div>
           )}
@@ -355,10 +355,10 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
           <div
             className={`relative px-3 py-2 max-w-[280px] break-words ${
               isCurrentUser
-                ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md"
+                ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md shadow-sm"
                 : isMentioned
-                ? "bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-700 text-green-900 dark:text-green-100 rounded-2xl rounded-bl-md"
-                : "bg-card text-card-foreground border border-border rounded-2xl rounded-bl-md shadow-sm"
+                ? "bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-900 dark:text-green-100 rounded-2xl rounded-bl-md shadow-sm"
+                : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md shadow-sm"
             }`}
           >
             {/* Message tail/arrow */}
@@ -367,8 +367,8 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
                 isCurrentUser
                   ? "right-0 bg-primary transform rotate-45 translate-x-1 translate-y-1"
                   : isMentioned && !isCurrentUser
-                  ? "left-0 bg-green-100 dark:bg-green-900 border-l border-b border-green-200 dark:border-green-700 transform rotate-45 -translate-x-1 translate-y-1"
-                  : "left-0 bg-card border-l border-b border-border transform rotate-45 -translate-x-1 translate-y-1"
+                  ? "left-0 bg-green-50 dark:bg-green-950 border-l border-b border-green-200 dark:border-green-800 transform rotate-45 -translate-x-1 translate-y-1"
+                  : "left-0 bg-white dark:bg-gray-800 border-l border-b border-gray-200 dark:border-gray-700 transform rotate-45 -translate-x-1 translate-y-1"
               }`}
             />
             
