@@ -389,10 +389,10 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
             />
             
             {/* Timestamp */}
-            <div className={`text-xs mt-1 flex items-center gap-1 ${
+            <div className={`text-xs mt-1 flex items-center gap-1 justify-end ${
               isCurrentUser 
-                ? "text-primary-foreground/70 justify-end" 
-                : "text-muted-foreground justify-start"
+                ? "text-primary-foreground/70" 
+                : "text-muted-foreground"
             }`}>
               <span>
                 {new Date(message.timestamp).toLocaleTimeString("id-ID", {
