@@ -35,6 +35,8 @@ interface GroupChatProps {
 export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [showMentions, setShowMentions] = useState(false);
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [filteredUsers, setFilteredUsers] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -210,7 +212,41 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (showMentions && filteredUsers.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedMentionIndex(prev => 
+          prev < filteredUsers.length - 1 ? prev + 1 : 0
+        );
+        return;
+      }
+      
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedMentionIndex(prev => 
+          prev > 0 ? prev - 1 : filteredUsers.length - 1
+        );
+        return;
+      }
+      
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (filteredUsers[selectedMentionIndex]) {
+          insertMention(filteredUsers[selectedMentionIndex]);
+        }
+        return;
+      }
+      
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowMentions(false);
+        setFilteredUsers([]);
+        return;
+      }
+    }
+    
+    if (e.key === "Enter" && !showMentions) {
+      e.preventDefault();
       sendChatMessage();
     }
   };
@@ -257,12 +293,20 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
     if (lastAtIndex !== -1) {
       const textAfterAt = value.substring(lastAtIndex + 1);
       if (!textAfterAt.includes(" ")) {
+        // Filter users based on text after @
+        const filtered = availableUsers.filter(user => 
+          user.toLowerCase().includes(textAfterAt.toLowerCase())
+        );
+        setFilteredUsers(filtered);
+        setSelectedMentionIndex(0);
         setShowMentions(true);
       } else {
         setShowMentions(false);
+        setFilteredUsers([]);
       }
     } else {
       setShowMentions(false);
+      setFilteredUsers([]);
     }
   };
 
@@ -417,16 +461,20 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
         </ScrollArea>
 
         {/* Mentions dropdown */}
-        {showMentions && availableUsers.length > 0 && (
-          <div className="border rounded-lg bg-background shadow-lg p-2 space-y-1">
+        {showMentions && filteredUsers.length > 0 && (
+          <div className="border rounded-lg bg-background shadow-lg p-2 space-y-1 z-50">
             <div className="text-xs text-muted-foreground px-2 py-1">
-              Mention seseorang:
+              Mention seseorang: (gunakan ↑↓ untuk navigasi, Enter untuk pilih)
             </div>
-            {availableUsers.map((user) => (
+            {filteredUsers.map((user, index) => (
               <button
                 key={user}
                 onClick={() => insertMention(user)}
-                className="w-full text-left px-2 py-1 text-sm hover:bg-muted rounded flex items-center gap-2"
+                className={`w-full text-left px-2 py-1 text-sm rounded flex items-center gap-2 transition-colors ${
+                  index === selectedMentionIndex 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-muted"
+                }`}
               >
                 <AtSign className="w-3 h-3" />
                 {user}
