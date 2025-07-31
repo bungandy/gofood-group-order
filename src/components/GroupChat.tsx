@@ -361,18 +361,6 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
                 : "bg-muted text-foreground rounded-2xl rounded-bl-md"
             }`}
           >
-            {/* Message tail/arrow */}
-            <div
-              className={`absolute bottom-0 w-3 h-3 ${
-                isCurrentUser
-                  ? "right-0 bg-primary transform rotate-45 translate-x-1 translate-y-1"
-                  : "left-0 bg-muted transform rotate-45 -translate-x-1 translate-y-1"
-              } ${
-                isMentioned && !isCurrentUser 
-                  ? "bg-green-100 dark:bg-green-900" 
-                  : ""
-              }`}
-            />
             
             {/* Sender name for other users */}
             {!isCurrentUser && (
