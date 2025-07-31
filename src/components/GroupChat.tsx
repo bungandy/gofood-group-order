@@ -409,14 +409,14 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
         </div>
       </div>
       {/* Messages Area */}
-      <div className="flex-1 min-h-0 p-4">
+      <div className="flex-1 min-h-0 px-4 pt-4">
         <ScrollArea className="h-full w-full pr-2" ref={scrollAreaRef}>
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground text-sm py-8">
               Belum ada chat. Mulai percakapan!
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-1 pb-4">
               {messages.map(renderMessage)}
               
               {/* Show typing indicators for other users */}
@@ -460,9 +460,9 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
           )}
         </ScrollArea>
 
-        {/* Mentions dropdown */}
+        {/* Mentions dropdown - positioned absolutely */}
         {showMentions && filteredUsers.length > 0 && (
-          <div className="border rounded-lg bg-background shadow-lg p-2 space-y-1 z-50">
+          <div className="absolute bottom-20 left-4 right-4 border rounded-lg bg-background shadow-lg p-2 space-y-1 z-50">
             <div className="text-xs text-muted-foreground px-2 py-1">
               Mention seseorang: (gunakan ↑↓ untuk navigasi, Enter untuk pilih)
             </div>
@@ -482,9 +482,12 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
             ))}
           </div>
         )}
+      </div>
 
+      {/* Fixed Input Area at Bottom */}
+      <div className="border-t border-border bg-background p-4 space-y-3">
         {/* Message input */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2">
           <Input
             ref={inputRef}
             placeholder={
@@ -512,7 +515,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders }: GroupChatProps
         </div>
 
         {availableUsers.length > 0 && (
-          <div className="text-xs text-muted-foreground mt-2">
+          <div className="text-xs text-muted-foreground">
             Pemesan aktif: {availableUsers.join(", ")}
           </div>
         )}
