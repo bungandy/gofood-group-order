@@ -20,7 +20,7 @@ interface ChatMessage {
 interface Order {
   id: string;
   customerName: string;
-  items: { menuItem: any; quantity: number }[];
+  items: { menuItem: { id: string; name: string; price: number; }; quantity: number }[];
   notes?: string;
   total: number;
   timestamp: string;
@@ -56,8 +56,13 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
   // Supabase hook for chat functionality
   const { messages, sendMessage, sendTypingStatus, loading, isConnected, refreshConnection, typingUsers } = useSupabaseChat(sessionId);
 
-  // Get all unique customer names for mentions
-  const availableUsers = Array.from(new Set(orders.map(order => order.customerName)));
+  // Get all unique customer names for mentions from orders AND recent chat messages
+  const availableUsers = Array.from(new Set([
+    ...orders.map(order => order.customerName),
+    ...messages.map(msg => msg.senderName),
+    // Add some fallback test users if no users are available
+    ...(orders.length === 0 && messages.length === 0 ? ['Andy', 'Budi', 'Citra'] : [])
+  ])).filter(name => name && name.trim() !== '' && name !== currentUserName);
 
   // Function to scroll to bottom
   const scrollToBottom = () => {
@@ -121,7 +126,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
 
         // Simple notification sound using Web Audio API
         try {
-          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
           const oscillator = audioContext.createOscillator();
           const gainNode = audioContext.createGain();
           
@@ -272,8 +277,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
     const value = e.target.value;
     setNewMessage(value);
     
-    console.log("Input value:", value);
-    console.log("Available users:", availableUsers);
+    console.log("📝 Input change:", { value, availableUsers });
     
     // Show typing indicator and send to others
     if (value.trim() && !isTyping && currentUserName) {
@@ -296,38 +300,43 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
     
     // Show mentions when typing @
     const lastAtIndex = value.lastIndexOf("@");
-    console.log("Last @ index:", lastAtIndex);
     
     if (lastAtIndex !== -1) {
       const textAfterAt = value.substring(lastAtIndex + 1);
-      console.log("Text after @:", textAfterAt);
-      console.log("Contains space:", textAfterAt.includes(" "));
-      console.log("Available users before filter:", availableUsers);
+      
+      console.log("🎯 Mention detection:", { 
+        lastAtIndex, 
+        textAfterAt, 
+        hasSpace: textAfterAt.includes(" "),
+        availableUsersCount: availableUsers.length,
+        availableUsers 
+      });
       
       if (!textAfterAt.includes(" ")) {
         // Filter users based on text after @ (empty string matches all)
         const filtered = availableUsers.filter(user => 
           user.toLowerCase().includes(textAfterAt.toLowerCase())
         );
-        console.log("Filtered users:", filtered);
+        
+        console.log("🔍 Filtered users:", { textAfterAt, filtered, count: filtered.length });
         
         if (filtered.length > 0) {
           setFilteredUsers(filtered);
           setSelectedMentionIndex(0);
           setShowMentions(true);
-          console.log("Setting showMentions to true, filtered count:", filtered.length);
+          console.log("✅ Showing mention dropdown with", filtered.length, "users");
         } else {
-          console.log("No filtered users found");
+          console.log("❌ No users match filter");
           setShowMentions(false);
           setFilteredUsers([]);
         }
       } else {
-        console.log("Hiding mentions - space found");
+        console.log("❌ Hiding mentions - space found after @");
         setShowMentions(false);
         setFilteredUsers([]);
       }
     } else {
-      console.log("Hiding mentions - no @ found");
+      console.log("❌ No @ found in message");
       setShowMentions(false);
       setFilteredUsers([]);
     }
@@ -472,7 +481,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
         </div>
       )}
       {/* Messages Area */}
-      <div className="flex-1 min-h-0 px-4 pt-4">
+      <div className="flex-1 min-h-0 px-4 pt-4 relative">
         <ScrollArea className="h-full w-full pr-2" ref={scrollAreaRef}>
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground text-sm py-8">
@@ -523,10 +532,10 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
           )}
         </ScrollArea>
 
-        {/* Mentions dropdown - positioned absolutely */}
+        {/* Mentions dropdown - positioned above input */}
         {showMentions && filteredUsers.length > 0 && (
-          <div className="absolute bottom-16 left-3 right-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl p-2 space-y-1 z-[100] max-h-40 overflow-y-auto">
-            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600">
+          <div className="absolute bottom-0 left-0 right-0 bg-background border border-border rounded-t-lg shadow-2xl p-2 space-y-1 z-[1000] max-h-40 overflow-y-auto">
+            <div className="text-xs text-muted-foreground px-2 py-1 border-b border-border">
               Mention seseorang: (gunakan ↑↓ untuk navigasi, Enter untuk pilih)
             </div>
             {filteredUsers.map((user, index) => (
@@ -535,8 +544,8 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
                 onClick={() => insertMention(user)}
                 className={`w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-2 transition-colors ${
                   index === selectedMentionIndex 
-                    ? "bg-blue-500 text-white" 
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-muted text-foreground"
                 }`}
               >
                 <AtSign className="w-3 h-3" />
