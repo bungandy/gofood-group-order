@@ -155,10 +155,7 @@ export const OrderSummaryByMerchant = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {Object.entries(groupedOrders).map(([merchantName, merchantOrders]) => {
-          const isExpanded = expandedMerchants[merchantName];
           const totalMerchants = Object.keys(groupedOrders).length;
-          const hasMultipleOrders = merchantOrders.length > 2;
-          const shouldShowCollapse = totalMerchants > 1 && hasMultipleOrders; // Only show collapse if multiple merchants AND multiple orders
           
           return (
             <div key={merchantName} className="border border-primary/20 rounded-lg p-3 bg-muted/20">
@@ -167,23 +164,11 @@ export const OrderSummaryByMerchant = ({
                   {totalMerchants > 1 && <div className="w-2 h-2 bg-primary rounded-full"></div>}
                   {merchantName}
                 </div>
-                {shouldShowCollapse && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setExpandedMerchants(prev => ({ ...prev, [merchantName]: !prev[merchantName] }))}
-                    className="h-6 w-6 p-0 hover:bg-primary/10"
-                  >
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </Button>
-                )}
               </div>
               
               <div className="relative ml-4">
                 <div 
-                  className={`space-y-2 overflow-hidden transition-all duration-300 ${
-                    !shouldShowCollapse || isExpanded ? '' : 'max-h-[200px]'
-                  }`}
+                  className={`space-y-2 overflow-hidden transition-all duration-300`}
                 >
                   {merchantOrders.map((order) => (
                     <div key={`${merchantName}_${order.id}`} className={`${compact ? 'p-2' : 'p-3'} border rounded bg-muted/20`}>
@@ -251,10 +236,6 @@ export const OrderSummaryByMerchant = ({
                   ))}
                 </div>
                 
-                {/* Gradient overlay when collapsed */}
-                {shouldShowCollapse && !isExpanded && (
-                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-muted/40 to-transparent pointer-events-none" />
-                )}
               </div>
               
               {showDeliveryFee && !externalDeliveryFees && (

@@ -111,13 +111,15 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
           <Card key={merchant.id} className="bg-white/80 backdrop-blur-sm animate-fade-in">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-primary flex items-center gap-2">
+                <CardTitle className="text-primary flex gap-2">
                   {merchants.length > 1 && (
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div className="mt-1 h-6 aspect-square bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
                       {index + 1}
                     </div>
                   )}
+                  <div className='flex-grow text-xl'>
                   {merchant.name}
+                  </div>
                 </CardTitle>
                 
                 {/* Expand/collapse button next to merchant name */}
