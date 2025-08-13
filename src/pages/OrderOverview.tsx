@@ -334,7 +334,7 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
                         {merchantName}
                       </div>
                       
-                      <div className="space-y-3 ml-4">
+                      <div className="space-y-3">
                         {Object.values(items).map(({ menuItem, quantity, customers }) => (
                           <div key={menuItem.id} className="p-3 border rounded-lg bg-white/50">
                             <div className="flex justify-between items-start mb-2">
@@ -344,7 +344,7 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
                                   {quantity}x @ Rp {menuItem.price.toLocaleString('id-ID')}
                                 </p>
                               </div>
-                              <Badge variant="secondary">
+                              <Badge variant="secondary" className="whitespace-nowrap ml-4">
                                 Rp {(menuItem.price * quantity).toLocaleString('id-ID')}
                               </Badge>
                             </div>
@@ -358,9 +358,6 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
                                       <User className="w-3 h-3" />
                                       {customer.name} ({customer.quantity}x)
                                     </span>
-                                    {customer.notes && (
-                                      <span className="italic">"{customer.notes}"</span>
-                                    )}
                                   </div>
                                 ))}
                               </div>
@@ -387,8 +384,8 @@ Total: Rp ${order.total.toLocaleString('id-ID')}
                            />
                          </div>
                          
-                         <div className="flex justify-between items-center font-medium text-primary border-t pt-2">
-                           <span>Subtotal + Ongkir {merchantName}:</span>
+                         <div className="flex justify-between items-center font-medium text-primary pt-2">
+                           <span>Subtotal + Ongkir:</span>
                            <span>Rp {((merchantSubtotals[merchantName] || 0) + (merchantDeliveryFees[merchantName] || 0)).toLocaleString('id-ID')}</span>
                          </div>
                        </div>

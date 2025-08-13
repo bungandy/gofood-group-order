@@ -125,10 +125,9 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
                 {/* Expand/collapse button next to merchant name */}
                 {shouldShowExpansion && (
                   <Button
-                    variant="ghost"
                     size="sm"
                     onClick={() => toggleMerchantExpansion(merchant.id)}
-                    className="ml-2 p-1 h-8 w-8 rounded-full hover:bg-primary/10"
+                    className="ml-2 p-1 h-8 w-8 rounded-full"
                   >
                     {isExpanded ? (
                       <ChevronUp className="w-4 h-4" />
@@ -170,28 +169,8 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
                     return (
                       <div key={categoryKey} className="space-y-3">
                         {/* Category Title */}
-                        <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                        <div className="border-b border-gray-200 pb-2">
                           <h3 className="text-lg font-semibold text-gray-800">{category.title}</h3>
-                          {shouldShowCategoryExpansion && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleCategoryExpansion(categoryKey)}
-                              className="text-xs text-muted-foreground hover:text-primary"
-                            >
-                              {isCategoryExpanded ? (
-                                <>
-                                  <ChevronUp className="w-3 h-3 mr-1" />
-                                  Sembunyikan
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="w-3 h-3 mr-1" />
-                                  Lihat Semua ({category.items.length})
-                                </>
-                              )}
-                            </Button>
-                          )}
                         </div>
                         
                         {/* Category Items */}
@@ -210,9 +189,29 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
                           
                           {/* Gradient fade effect when category is collapsed */}
                           {shouldShowCategoryExpansion && !isCategoryExpanded && (
-                            <div className="relative">
-                              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
-                            </div>
+                            <>
+                              <div className="relative">
+                                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleCategoryExpansion(categoryKey)}
+                                className="text-xs text-muted-foreground"
+                              >
+                                {isCategoryExpanded ? (
+                                  <>
+                                    <ChevronUp className="w-3 h-3 mr-1" />
+                                    Sembunyikan
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="w-3 h-3 mr-1" />
+                                    Lihat Semua ({category.items.length})
+                                  </>
+                                )}
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>

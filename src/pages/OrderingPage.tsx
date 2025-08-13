@@ -197,30 +197,6 @@ const OrderingPage: React.FC = () => {
 
           {/* Order Form & Summary */}
           <div className="space-y-6">
-            <OrderSummaryByMerchant 
-              orders={orders} 
-              merchants={merchants} 
-              onEditOrder={handleEditOrder} 
-              onDeleteOrder={handleDeleteOrder} 
-              compact={true}
-              isConnected={ordersConnected}
-              onRefreshConnection={refreshOrdersConnection}
-            />
-
-            <OrderForm
-              customerName={customerName}
-              notes={notes}
-              cart={cart}
-              cartTotal={cartTotal}
-              merchants={merchants}
-              isEditing={isEditing}
-              editingOrderName={editingOrder?.customerName}
-              loading={ordersLoading}
-              onCustomerNameChange={setCustomerName}
-              onNotesChange={setNotes}
-              onSubmit={handleSubmitOrder}
-            />
-            
             {/* Overview Button */}
             {orders.length > 0 && (
               <Card className="bg-white/80 backdrop-blur-sm">
@@ -236,6 +212,30 @@ const OrderingPage: React.FC = () => {
                 </CardContent>
               </Card>
             )}
+
+            <OrderForm
+              customerName={customerName}
+              notes={notes}
+              cart={cart}
+              cartTotal={cartTotal}
+              merchants={merchants}
+              isEditing={isEditing}
+              editingOrderName={editingOrder?.customerName}
+              loading={ordersLoading}
+              onCustomerNameChange={setCustomerName}
+              onNotesChange={setNotes}
+              onSubmit={handleSubmitOrder}
+            />
+
+            <OrderSummaryByMerchant 
+              orders={orders} 
+              merchants={merchants} 
+              onEditOrder={handleEditOrder} 
+              onDeleteOrder={handleDeleteOrder} 
+              compact={true}
+              isConnected={ordersConnected}
+              onRefreshConnection={refreshOrdersConnection}
+            />
           </div>
         </div>
       </div>

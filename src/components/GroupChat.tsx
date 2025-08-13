@@ -62,7 +62,9 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
     ...messages.map(msg => msg.senderName),
     // Add some fallback test users if no users are available
     ...(orders.length === 0 && messages.length === 0 ? ['Andy', 'Budi', 'Citra'] : [])
-  ])).filter(name => name && name.trim() !== '' && name !== currentUserName);
+  ]))
+    .filter(name => name && name.trim() !== '')
+    .sort((a, b) => a.localeCompare(b));
 
   // Function to scroll to bottom
   const scrollToBottom = () => {
@@ -588,7 +590,7 @@ export const GroupChat = ({ sessionId, currentUserName, orders, isChatOpen = fal
 
         {availableUsers.length > 0 && (
           <div className="text-xs text-muted-foreground">
-            Pemesan aktif: {availableUsers.join(", ")}
+            Pemesan aktif: <span className="capitalize">{availableUsers.join(", ")}</span>
           </div>
         )}
       </div>

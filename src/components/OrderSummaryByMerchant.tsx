@@ -159,22 +159,26 @@ export const OrderSummaryByMerchant = ({
           
           return (
             <div key={merchantName} className="border border-primary/20 rounded-lg p-3 bg-muted/20">
-              <div className="font-medium text-primary flex items-center justify-between border-b pb-1 mb-2">
+              <div className="font-medium text-primary flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  {totalMerchants > 1 && <div className="w-2 h-2 bg-primary rounded-full"></div>}
+                  {totalMerchants > 1 && (
+                    <div className="flex items-center justify-center w-5 h-5 bg-primary rounded-full text-white text-xs font-bold">
+                      {Object.keys(groupedOrders).indexOf(merchantName) + 1}
+                    </div>
+                  )}
                   {merchantName}
                 </div>
               </div>
               
-              <div className="relative ml-4">
+              <div className="relative ml-1">
                 <div 
                   className={`space-y-2 overflow-hidden transition-all duration-300`}
                 >
                   {merchantOrders.map((order) => (
-                    <div key={`${merchantName}_${order.id}`} className={`${compact ? 'p-2' : 'p-3'} border rounded bg-muted/20`}>
+                    <div key={`${merchantName}_${order.id}`} className={`${compact ? 'p-2' : 'p-3'} border border-l-4 border-l-primary rounded bg-muted/20`}>
                       <div className="flex justify-between items-start mb-1">
                         <div className="flex items-center gap-2">
-                          <div className={`${compact ? 'text-sm' : 'text-sm'} font-medium`}>{order.customerName}</div>
+                          <div className={`capitalize ${compact ? 'text-sm' : 'text-sm'} font-medium`}>{order.customerName}</div>
                           <div className="text-xs text-muted-foreground">
                             {order.timestamp ? new Date(order.timestamp).toLocaleString('id-ID', {
                               hour: '2-digit',
@@ -213,13 +217,13 @@ export const OrderSummaryByMerchant = ({
                       <div className="text-xs text-muted-foreground space-y-1">
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between">
-                            <span>{item.menuItem.name} ({item.quantity}x)</span>
-                            <span>Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
+                            <span>({item.quantity}x) {item.menuItem.name}</span>
+                            <span className="whitespace-nowrap pl-2">Rp {(item.menuItem.price * item.quantity).toLocaleString('id-ID')}</span>
                           </div>
                         ))}
                       </div>
                       {order.notes && (
-                        <div className="text-xs text-muted-foreground italic flex items-center gap-1 mt-1">
+                        <div className="text-xs bg-yellow-100 border border-yellow-300 rounded p-2.5 flex items-center gap-1 mt-1 font-bold">
                           <StickyNote className="w-3 h-3" />
                           {order.notes}
                         </div>
@@ -259,20 +263,20 @@ export const OrderSummaryByMerchant = ({
                 </div>
               )}
               
-              <div className="flex justify-between items-center font-medium text-primary border-t pt-2 ml-4">
-                <span>Subtotal {merchantName}:</span>
+              <div className="flex justify-between items-center font-medium text-primary pt-2">
+                <span>Subtotal:</span>
                 <span>Rp {(merchantSubtotals[merchantName] || 0).toLocaleString('id-ID')}</span>
               </div>
               
               {showDeliveryFee && externalDeliveryFees && (
-                <div className="flex justify-between items-center text-sm text-muted-foreground mt-1 ml-4">
+                <div className="flex justify-between items-center text-sm text-muted-foreground mt-1">
                   <span>Ongkir per orang: Rp {getDeliveryFeePerPerson(merchantName).toLocaleString('id-ID')} x {groupedOrders[merchantName]?.length || 0} orang</span>
                   <span>= Rp {(getDeliveryFeePerPerson(merchantName) * (groupedOrders[merchantName]?.length || 0)).toLocaleString('id-ID')}</span>
                 </div>
               )}
               
               {showDeliveryFee && !externalDeliveryFees && (
-                <div className="flex justify-between items-center text-sm text-primary mt-1 ml-4">
+                <div className="flex justify-between items-center text-sm text-primary mt-1">
                   <span>Total + Ongkir:</span>
                   <span>Rp {((merchantSubtotals[merchantName] || 0) + (merchantDeliveryFees[merchantName] || 0)).toLocaleString('id-ID')}</span>
                 </div>
